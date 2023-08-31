@@ -724,6 +724,7 @@ bool Maxon::configParam() {
       sdoVerifyWrite(OD_INDEX_SI_UNIT_VELOCITY, 0x00, false, velocity_unit,
                      configuration_.configRunSdoVerifyTimeout);
 
+  /*
   maxMotorSpeed = static_cast<uint32_t>(configuration_.workVoltage *
                                         configuration_.speedConstant);
   configSuccess &=
@@ -816,6 +817,7 @@ bool Maxon::configParam() {
   configSuccess &= sdoVerifyWrite(OD_INDEX_VELOCITY_CONTROL_PARAM, 0x02, false,
                                   static_cast<uint32_t>(velocityIGain),
                                   configuration_.configRunSdoVerifyTimeout);
+  */
 
   if (configSuccess) {
     MELO_INFO("Setting configuration parameters succeeded.");
