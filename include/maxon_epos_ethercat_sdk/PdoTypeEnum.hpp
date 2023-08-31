@@ -45,7 +45,8 @@ enum class RxPdoTypeEnum : int8_t {
   RxPdoCSV,
   RxPdoCSTCSP,
   RxPdoCSTCSPCSV,
-  RxPdoPVM
+  RxPdoPVM,
+  RxPdoPPM
 };
 
 // different TxPdo Types
@@ -57,7 +58,8 @@ enum class TxPdoTypeEnum : int8_t {
   TxPdoCSV,
   TxPdoCSTCSP,
   TxPdoCSTCSPCSV,
-  TxPdoPVM
+  TxPdoPVM,
+  TxPdoPPM
 };
 
 }  // namespace maxon

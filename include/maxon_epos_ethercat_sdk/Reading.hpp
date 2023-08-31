@@ -69,6 +69,8 @@ class Reading {
    */
   int32_t getActualPositionRaw() const;
   int32_t getActualVelocityRaw() const;
+  int32_t getDemandVelocityRaw() const;
+  int32_t getDemandPositionRaw() const;
   uint16_t getRawStatusword() const;
   int16_t getActualCurrentRaw() const;
   uint16_t getAnalogInputRaw() const;
@@ -81,6 +83,8 @@ class Reading {
   double getActualVelocity() const;
   double getActualCurrent() const;
   double getActualTorque() const;
+  double getDemandVelocity() const;
+  double getDemandPosition() const;
   double getAnalogInput() const;
   double getAgeOfLastReadingInMicroseconds() const;
   double getBusVoltage() const;
@@ -104,6 +108,8 @@ class Reading {
 
   void setDemandVelocity(int32_t demandVelocity);
 
+  void setDemandPosition(int32_t demandVelocity);
+
   void setStatusword(uint16_t statusword);
 
   void setAnalogInput(int16_t analogInput);
@@ -125,6 +131,7 @@ class Reading {
   int32_t digitalInputs_{0};
   int32_t actualVelocity_{0};
   int32_t demandVelocity_{0};
+  int32_t demandPosition_{0};
   uint16_t statusword_{0};
   int16_t analogInput_{0};
   int16_t actualCurrent_{0};

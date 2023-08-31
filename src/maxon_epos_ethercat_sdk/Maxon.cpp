@@ -273,6 +273,23 @@ void Maxon::updateWrite() {
       bus_->writeRxPdo(address_, rxPdo);
       break;
     }
+    case RxPdoTypeEnum::RxPdoPPM: {
+      RxPdoPPM rxPdo{};
+      {
+        std::lock_guard<std::recursive_mutex> lock(stagedCommandMutex_);
+        rxPdo.controlWord_ = controlword_.getRawControlword();
+        rxPdo.profileAccel_ = stagedCommand_.getProfileAccelRaw();
+        rxPdo.profileDeccel_ = stagedCommand_.getProfileDeccelRaw();
+        rxPdo.profileVelocity_ = stagedCommand_.getProfileVelocityRaw();
+        rxPdo.targetPosition_ = stagedCommand_.getTargetPositionRaw();
+        rxPdo.motionProfileType_ = stagedCommand_.getMotionProfileType();
+      }
+
+      // actually writing to the hardware
+      bus_->writeRxPdo(address_, rxPdo);
+      break;
+    }
+
     default:
       MELO_ERROR_STREAM(
           "[maxon_epos_ethercat_sdk:Maxon::updateWrite] "
@@ -366,6 +383,17 @@ void Maxon::updateRead() {
       {
         std::lock_guard<std::recursive_mutex> lock(readingMutex_);
         reading_.setDemandVelocity(txPdo.demandVelocity_);
+        reading_.setStatusword(txPdo.statusword_);
+      }
+      break;
+    }
+    case TxPdoTypeEnum::TxPdoPPM: {
+      TxPdoPPM txPdo{};
+      // reading from the bus
+      bus_->readTxPdo(address_, txPdo);
+      {
+        std::lock_guard<std::recursive_mutex> lock(readingMutex_);
+        reading_.setDemandPosition(txPdo.demandPosition_);
         reading_.setStatusword(txPdo.statusword_);
       }
       break;

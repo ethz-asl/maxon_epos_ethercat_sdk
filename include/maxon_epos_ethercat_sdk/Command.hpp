@@ -63,19 +63,27 @@ class Command {
   void setPositionOffsetRaw(int32_t positionOffset);
   void setTorqueOffsetRaw(int16_t torqueOffset);
   void setVelocityOffsetRaw(int32_t velocityOffset);
+  void setProfileAccelRaw(uint32_t profileAccel);
+  void setProfileDeccelRaw(uint32_t profielDeccel);
+  void setProfileVelocityRaw(uint32_t profileVelocity);
+  
 
   /// set factors
   void setPositionFactorRadToInteger(double factor);
   void setTorqueFactorNmToInteger(double factor);
   void setCurrentFactorAToInteger(double factor);
 
-  /// set user units
+  /// set user units (rad, rad/s,  rad/(s²))
   void setTargetPosition(double targetPosition);
   void setTargetVelocity(double targetVelocity);
   void setTargetTorque(double targetTorque);
   void setPositionOffset(double positionOffset);
   void setTorqueOffset(double velocityOffset);
   void setVelocityOffset(double velocityOffset);
+  void setProfileAccel(double profileAccel);
+  void setProfileDeccel(double profileDeccel);
+  void setProfileVelocity(double profileVelocity);
+
 
   /// other
   void setDigitalOutputs(uint32_t digitalOutputs);
@@ -89,6 +97,7 @@ class Command {
   int32_t getPositionOffsetRaw() const;
   int16_t getTorqueOffsetRaw() const;
   int32_t getVelocityOffsetRaw() const;
+  uint32_t getProfileVelocityRaw() const;
   uint32_t getProfileAccelRaw() const;
   uint32_t getProfileDeccelRaw() const;
   int16_t getMotionProfileType() const;
@@ -99,6 +108,9 @@ class Command {
   double getTargetTorque() const;
   double getTorqueOffset() const;
   double getVelocityOffset() const;
+  double getProfileVelocity() const;
+  double getProfileAccel() const;
+  double getProfileDeccel() const;
 
   /*!
    * Get the digital outputs.
@@ -127,6 +139,9 @@ class Command {
   double positionOffsetUU_{0};
   double torqueOffsetUU_{0};
   double velocityOffsetUU_{0};
+  double profileVelocityUU_{0};
+  double profileAccelUU_{0};
+  double profileDeccelUU_{0};
 
   int32_t targetPosition_{0};
   int32_t targetVelocity_{0};
@@ -134,6 +149,7 @@ class Command {
   int32_t positionOffset_{0};
   int16_t torqueOffset_{0};
   int32_t velocityOffset_{0};
+  uint32_t profileVelocity_{0};
   uint32_t profileAccel_{0};
   uint32_t profileDeccel_{0};
   int16_t motionProfileType_{0};
@@ -144,6 +160,7 @@ class Command {
 
   double positionFactorRadToInteger_{1};
   const double velocityFactorRadPerSecToMicroRPM_{1.0 / (2 * M_PI) * 60 * 1e6};
+  const double accelFactorRadPerSecSquaredToRPMPerSec_{1.0/ (2 * M_PI) * 60};
   double torqueFactorNmToInteger_{1};
   double currentFactorAToInteger_{1};
 

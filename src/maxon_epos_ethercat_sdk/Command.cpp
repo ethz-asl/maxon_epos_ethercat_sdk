@@ -137,6 +137,15 @@ void Command::setTorqueOffsetRaw(int16_t torqueOffset) {
 void Command::setVelocityOffsetRaw(int32_t velocityOffset) {
   velocityOffset_ = velocityOffset;
 }
+void Command::setProfileAccelRaw(uint32_t profileAccel) {
+  profileAccel_ = profileAccel;
+}
+void Command::setProfileDeccelRaw(uint32_t profileDeccel) {
+  profileDeccel_ = profileDeccel;
+}
+void Command::setProfileVelocityRaw(uint32_t profileVelocity) {
+  profileVelocity_ = profileVelocity;
+}
 
 /*!
  * user unit set methods
@@ -162,6 +171,16 @@ void Command::setTorqueOffset(double torqueOffset) {
 void Command::setVelocityOffset(double velocityOffset) {
   velocityOffsetUU_ = velocityOffset;
 }
+void Command::setProfileAccel(double profileAccel) {
+  profileAccelUU_ = profileAccel;
+}
+void Command::setProfileDeccel(double profileDeccel) {
+  profileDeccelUU_ = profileDeccel;
+}
+void Command::setProfileVelocity(double profileVelocity) {
+  profileVelocityUU_ = profileVelocity;
+}
+
 
 /*!
  * factors set methods
@@ -198,6 +217,7 @@ int16_t Command::getTargetTorqueRaw() const { return targetTorque_; }
 int32_t Command::getPositionOffsetRaw() const { return positionOffset_; }
 int16_t Command::getTorqueOffsetRaw() const { return torqueOffset_; }
 int32_t Command::getVelocityOffsetRaw() const { return velocityOffset_; }
+uint32_t Command::getProfileVelocityRaw() const { return profileVelocity_; }
 uint32_t Command::getProfileAccelRaw() const { return profileAccel_; }
 uint32_t Command::getProfileDeccelRaw() const { return profileDeccel_; }
 int16_t Command::getMotionProfileType() const { return motionProfileType_; }
@@ -210,6 +230,9 @@ double Command::getTargetVelocity() const { return targetVelocityUU_; }
 double Command::getTargetTorque() const { return targetTorqueUU_; }
 double Command::getTorqueOffset() const { return torqueOffsetUU_; }
 double Command::getVelocityOffset() const { return velocityOffsetUU_; }
+double Command::getProfileVelocity() const { return profileVelocityUU_; }
+double Command::getProfileAccel() const { return profileAccelUU_; }
+double Command::getProfileDeccel() const { return profileDeccelUU_; }
 
 void Command::doUnitConversion() {
   if (!useRawCommands_) {
@@ -226,6 +249,13 @@ void Command::doUnitConversion() {
         static_cast<int16_t>(torqueFactorNmToInteger_ * torqueOffsetUU_);
     velocityOffset_ = static_cast<int32_t>(velocityFactorRadPerSecToMicroRPM_ *
                                            velocityOffsetUU_);
+    profileAccel_ = static_cast<uint32_t>(accelFactorRadPerSecSquaredToRPMPerSec_ *
+                                            profileAccelUU_);
+    profileDeccel_ = static_cast<uint32_t>(accelFactorRadPerSecSquaredToRPMPerSec_ *
+                                            profileAccelUU_);
+    profileVelocity_ = static_cast<uint32_t>(velocityFactorRadPerSecToMicroRPM_ *
+                                           profileVelocityUU_);
+
   }
 }
 
