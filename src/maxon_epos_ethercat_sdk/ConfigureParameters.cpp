@@ -387,6 +387,7 @@ bool Maxon::mapPdos(RxPdoTypeEnum rxPdoTypeEnum, TxPdoTypeEnum txPdoTypeEnum) {
           (OD_INDEX_PROFILE_ACCELERATION << 16) | (0x00 << 8) | sizeof(uint32_t) * 8,
           (OD_INDEX_PROFILE_DECELERATION << 16) | (0x00 << 8) | sizeof(uint32_t) * 8,
           (OD_INDEX_MOTION_PROFILE_TYPE << 16) | (0x00 << 8) | sizeof(int16_t) * 8,
+          //(OD_INDEX_MODES_OF_OPERATION << 16) | (0x00 << 8) | sizeof(int8_t) * 8,
       };
 
 

@@ -116,6 +116,7 @@ struct RxPdoPPM {
   uint32_t profileAccel_;
   uint32_t profileDeccel_;
   int16_t motionProfileType_;
+  //int8_t modeOfOperation_;
 } __attribute__((packed));
 
 

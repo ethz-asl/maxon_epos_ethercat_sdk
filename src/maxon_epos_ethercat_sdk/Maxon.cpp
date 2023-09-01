@@ -278,11 +278,15 @@ void Maxon::updateWrite() {
       {
         std::lock_guard<std::recursive_mutex> lock(stagedCommandMutex_);
         rxPdo.controlWord_ = controlword_.getRawControlword();
+        rxPdo.controlWord_ |= 1<<5;
         rxPdo.profileAccel_ = stagedCommand_.getProfileAccelRaw();
         rxPdo.profileDeccel_ = stagedCommand_.getProfileDeccelRaw();
         rxPdo.profileVelocity_ = stagedCommand_.getProfileVelocityRaw();
         rxPdo.targetPosition_ = stagedCommand_.getTargetPositionRaw();
         rxPdo.motionProfileType_ = stagedCommand_.getMotionProfileType();
+        //rxPdo.modeOfOperation_ = static_cast<int8_t>(modeOfOperation_);
+
+        //std::cout << "Target: " << rxPdo.targetPosition_ << ", Acc.: " << rxPdo.profileAccel_ << " \n";
       }
 
       // actually writing to the hardware

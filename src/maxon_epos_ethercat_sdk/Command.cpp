@@ -36,6 +36,7 @@
 
 namespace maxon {
 Command::Command(const Command& other) {
+  /*
   targetPositionUU_ = other.targetPositionUU_;
   targetVelocityUU_ = other.targetVelocityUU_;
   targetTorqueUU_ = other.targetTorqueUU_;
@@ -45,6 +46,30 @@ Command::Command(const Command& other) {
   targetVelocity_ = other.targetVelocity_;
   targetTorque_ = other.targetTorque_;
   torqueOffset_ = other.torqueOffset_;
+  */
+
+  targetPositionUU_ = other.targetPositionUU_;
+  targetVelocityUU_ = other.targetVelocityUU_;
+  targetTorqueUU_ = other.targetTorqueUU_;
+  positionOffsetUU_ = other.positionOffsetUU_;
+  torqueOffsetUU_ = other.torqueOffsetUU_;
+  velocityOffsetUU_ = other.velocityOffsetUU_;
+  profileVelocityUU_ = other.profileVelocityUU_;
+  profileAccelUU_ = other.profileAccelUU_;
+  profileDeccelUU_ = other.profileDeccelUU_;
+
+
+  targetPosition_ = other.targetPosition_;
+  targetVelocity_ = other.targetVelocity_;
+  targetTorque_ = other.targetTorque_;
+  positionOffset_ = other.positionOffset_;
+  torqueOffset_ = other.torqueOffset_;
+  velocityOffset_ = other.velocityOffset_;
+  profileVelocity_ = other.profileVelocity_;
+  profileAccel_ = other.profileAccel_;
+  profileDeccel_ = other.profileDeccel_;
+  motionProfileType_ = other.motionProfileType_;
+
 
   positionFactorRadToInteger_ = other.positionFactorRadToInteger_;
   torqueFactorNmToInteger_ = other.torqueFactorNmToInteger_;
@@ -58,18 +83,27 @@ Command::Command(const Command& other) {
 
 Command& Command::operator=(const Command& other) {
   targetPositionUU_ = other.targetPositionUU_;
-  positionOffsetUU_ = other.positionOffsetUU_;
   targetVelocityUU_ = other.targetVelocityUU_;
-  velocityOffsetUU_ = other.velocityOffsetUU_;
   targetTorqueUU_ = other.targetTorqueUU_;
+  positionOffsetUU_ = other.positionOffsetUU_;
   torqueOffsetUU_ = other.torqueOffsetUU_;
+  velocityOffsetUU_ = other.velocityOffsetUU_;
+  profileVelocityUU_ = other.profileVelocityUU_;
+  profileAccelUU_ = other.profileAccelUU_;
+  profileDeccelUU_ = other.profileDeccelUU_;
+
 
   targetPosition_ = other.targetPosition_;
-  positionOffset_ = other.positionOffset_;
   targetVelocity_ = other.targetVelocity_;
-  velocityOffset_ = other.velocityOffset_;
   targetTorque_ = other.targetTorque_;
+  positionOffset_ = other.positionOffset_;
   torqueOffset_ = other.torqueOffset_;
+  velocityOffset_ = other.velocityOffset_;
+  profileVelocity_ = other.profileVelocity_;
+  profileAccel_ = other.profileAccel_;
+  profileDeccel_ = other.profileDeccel_;
+  motionProfileType_ = other.motionProfileType_;
+
 
   positionFactorRadToInteger_ = other.positionFactorRadToInteger_;
   torqueFactorNmToInteger_ = other.torqueFactorNmToInteger_;

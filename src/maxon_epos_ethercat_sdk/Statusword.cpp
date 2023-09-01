@@ -163,4 +163,8 @@ std::string Statusword::getDriveStateString() const {
   }
 }
 
+uint16_t Statusword::getRawStatusword() {
+  return rawStatusword_;
+}
+
 }  // namespace maxon
