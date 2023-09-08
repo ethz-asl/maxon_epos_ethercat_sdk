@@ -96,8 +96,8 @@ class Reading {
   Statusword getStatusword() const;
   std::string getDigitalInputString() const;
   DriveState getDriveState() const;
-
-  /*!
+  int8_t getModeOfOperationDisplay() const;
+  /*!getActualPositionRaw
    * set methods (only raw)
    */
   void setActualPosition(int32_t actualPosition);
@@ -126,6 +126,8 @@ class Reading {
 
   void setTorqueFactorIntegerToNm(double torqueFactor);
 
+  void setModeOfOperationDisplay(int8_t modeOfOperation);
+
  protected:
   int32_t actualPosition_{0};
   int32_t digitalInputs_{0};
@@ -137,11 +139,16 @@ class Reading {
   int16_t actualCurrent_{0};
   uint32_t busVoltage_{0};
 
+  int8_t modeOfOperationDisp_{0};
+
   double positionFactorIntegerToRad_{1};
   static constexpr double velocityFactorMicroRPMToRadPerSec_ =
       2.0 * M_PI / (60.0 * 1e6);
   double currentFactorIntegerToAmp_{1};
   double torqueFactorIntegerToNm_{1};
+
+
+
 
   ReadingTimePoint lastReadingTimePoint_;
 

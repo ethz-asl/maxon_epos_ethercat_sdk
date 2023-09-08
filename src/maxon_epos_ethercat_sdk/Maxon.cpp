@@ -278,13 +278,12 @@ void Maxon::updateWrite() {
       {
         std::lock_guard<std::recursive_mutex> lock(stagedCommandMutex_);
         rxPdo.controlWord_ = controlword_.getRawControlword();
-        rxPdo.controlWord_ |= 1<<5;
         rxPdo.profileAccel_ = stagedCommand_.getProfileAccelRaw();
         rxPdo.profileDeccel_ = stagedCommand_.getProfileDeccelRaw();
         rxPdo.profileVelocity_ = stagedCommand_.getProfileVelocityRaw();
         rxPdo.targetPosition_ = stagedCommand_.getTargetPositionRaw();
         rxPdo.motionProfileType_ = stagedCommand_.getMotionProfileType();
-        //rxPdo.modeOfOperation_ = static_cast<int8_t>(modeOfOperation_);
+        rxPdo.modeOfOperation_ = static_cast<int8_t>(stagedCommand_.getModeOfOperation());
 
         //std::cout << "Target: " << rxPdo.targetPosition_ << ", Acc.: " << rxPdo.profileAccel_ << " \n";
       }
@@ -301,6 +300,11 @@ void Maxon::updateWrite() {
           << name_ << "'");
       addErrorToReading(ErrorType::RxPdoTypeError);
   }
+}
+
+maxon::Controlword *Maxon::getControlword()
+{
+  return &controlword_;
 }
 
 void Maxon::updateRead() {
@@ -399,6 +403,9 @@ void Maxon::updateRead() {
         std::lock_guard<std::recursive_mutex> lock(readingMutex_);
         reading_.setDemandPosition(txPdo.demandPosition_);
         reading_.setStatusword(txPdo.statusword_);
+        reading_.setActualPosition(txPdo.actualPosition_);
+        reading_.setActualVelocity(txPdo.actualVelocity_);
+        reading_.setModeOfOperationDisplay(txPdo.modeOfOperation_);
       }
       break;
     }

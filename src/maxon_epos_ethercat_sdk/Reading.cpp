@@ -82,6 +82,7 @@ double Reading::getAgeOfLastReadingInMicroseconds() const {
 /*!
  * Raw get methods
  */
+int8_t Reading::getModeOfOperationDisplay() const {return modeOfOperationDisp_;}
 int32_t Reading::getActualPositionRaw() const { return actualPosition_; }
 int32_t Reading::getActualVelocityRaw() const { return actualVelocity_; }
 int32_t Reading::getDemandVelocityRaw() const { return demandVelocity_; }
@@ -94,6 +95,7 @@ uint32_t Reading::getBusVoltageRaw() const { return busVoltage_; }
 /*!
  * User unit get methods
  */
+
 double Reading::getActualPosition() const {
   return static_cast<double>(actualPosition_) * positionFactorIntegerToRad_;
 }
@@ -113,9 +115,6 @@ double Reading::getDemandVelocity() const {
 double Reading::getDemandPosition() const {
   return static_cast<double>(demandPosition_) * positionFactorIntegerToRad_;
 }
-
-
-
 double Reading::getAnalogInput() const {
   return static_cast<double>(analogInput_) * 0.001;
 }
@@ -136,6 +135,9 @@ double Reading::getBusVoltage() const {
 /*!
  * Raw set methods
  */
+void Reading::setModeOfOperationDisplay(int8_t modeOfOperation) {modeOfOperationDisp_ = modeOfOperation;}
+
+
 void Reading::setActualPosition(int32_t actualPosition) {
   actualPosition_ = actualPosition;
 }
@@ -151,7 +153,6 @@ void Reading::setDemandVelocity(int32_t demandVelocity) {
 void Reading::setDemandPosition(int32_t demandPosition) {
   demandPosition_ = demandPosition;
 }
-
 void Reading::setStatusword(uint16_t statusword) { statusword_ = statusword; }
 
 void Reading::setAnalogInput(int16_t analogInput) {

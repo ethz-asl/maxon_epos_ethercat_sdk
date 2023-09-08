@@ -380,14 +380,14 @@ bool Maxon::mapPdos(RxPdoTypeEnum rxPdoTypeEnum, TxPdoTypeEnum txPdoTypeEnum) {
                                   configuration_.configRunSdoVerifyTimeout);
 
       // Write objects...
-      std::array<uint32_t, 6> objects{
+      std::array<uint32_t, 7> objects{
           (OD_INDEX_CONTROLWORD << 16) | (0x00 << 8) | sizeof(int16_t) * 8,
           (OD_INDEX_TARGET_POSITION << 16) | (0x00 << 8) | sizeof(int32_t) * 8,
           (OD_INDEX_PROFILE_VELOCITY << 16) | (0x00 << 8) | sizeof(uint32_t) * 8,
           (OD_INDEX_PROFILE_ACCELERATION << 16) | (0x00 << 8) | sizeof(uint32_t) * 8,
           (OD_INDEX_PROFILE_DECELERATION << 16) | (0x00 << 8) | sizeof(uint32_t) * 8,
           (OD_INDEX_MOTION_PROFILE_TYPE << 16) | (0x00 << 8) | sizeof(int16_t) * 8,
-          //(OD_INDEX_MODES_OF_OPERATION << 16) | (0x00 << 8) | sizeof(int8_t) * 8,
+          (OD_INDEX_MODES_OF_OPERATION << 16) | (0x00 << 8) | sizeof(int8_t) * 8,
       };
 
 
@@ -754,9 +754,12 @@ bool Maxon::mapPdos(RxPdoTypeEnum rxPdoTypeEnum, TxPdoTypeEnum txPdoTypeEnum) {
                                   configuration_.configRunSdoVerifyTimeout);
 
       // Write objects...
-      std::array<uint32_t, 2> objects{
+      std::array<uint32_t, 5> objects{
           (OD_INDEX_STATUSWORD << 16) | (0x00 << 8) | sizeof(uint16_t) * 8,
           (OD_INDEX_POSITION_DEMAND << 16) | (0x00 << 8) | sizeof(int32_t) * 8,
+          (OD_INDEX_POSITION_ACTUAL << 16) | (0x00 << 8) | sizeof(int32_t) * 8,
+          (OD_INDEX_VELOCITY_ACTUAL << 16) | (0x00 << 8) | sizeof(int32_t) * 8,
+          (OD_INDEX_MODES_OF_OPERATION_DISPLAY<< 16) | (0x00 << 8) | sizeof(int8_t) * 8,
       };
 
       subIndex = 0;
@@ -816,7 +819,10 @@ bool Maxon::configParam() {
 
   // Set velocity unit to micro revs per minute
   uint32_t velocity_unit;
-  velocity_unit = 0xFAB44700;
+  //velocity_unit = 0xFAB44700;
+
+  velocity_unit = 0xFDB44700;
+  
   configSuccess &=
       sdoVerifyWrite(OD_INDEX_SI_UNIT_VELOCITY, 0x00, false, velocity_unit,
                      configuration_.configRunSdoVerifyTimeout);

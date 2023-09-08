@@ -75,6 +75,8 @@ class Maxon : public ecat_master::EthercatDevice {
   }
   PdoInfo getCurrentPdoInfo() const override { return pdoInfo_; }
 
+  maxon::Controlword *getControlword();
+
  public:
   void stageCommand(const Command& command);
   Reading getReading() const;

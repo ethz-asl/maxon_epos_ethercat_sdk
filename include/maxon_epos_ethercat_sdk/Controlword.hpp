@@ -48,7 +48,10 @@ struct Controlword {
   bool faultReset_{false};            // bit 7
   bool halt_{false};                  // bit 8
   bool endlessMovement_{false};       // bit 15 profiled position mode
+  uint16_t controlWord_{0};
 
+  void set(int bit);
+  void reset(int bit);
   /*!
    * get the control word as a 16 bit unsigned integer
    * THIS DOES NOT RESPECT THE MODE SPECIFIC OPTIONS!

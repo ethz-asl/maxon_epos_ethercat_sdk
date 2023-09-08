@@ -99,31 +99,39 @@ std::ostream& operator<<(std::ostream& os, const Controlword& controlword) {
 }
 
 uint16_t Controlword::getRawControlword() {
-  uint16_t rawControlword = 0;
-
   if (switchOn_) {
-    rawControlword |= (1 << 0);
+    controlWord_ |= (1 << 0);
   }
   if (enableVoltage_) {
-    rawControlword |= (1 << 1);
+    controlWord_ |= (1 << 1);
   }
   if (quickStop_) {
-    rawControlword |= (1 << 2);
+    controlWord_ |= (1 << 2);
   }
   if (enableOperation_) {
-    rawControlword |= (1 << 3);
+    controlWord_ |= (1 << 3);
   }
   if (faultReset_) {
-    rawControlword |= (1 << 7);
+    controlWord_ |= (1 << 7);
   }
   if (halt_) {
-    rawControlword |= (1 << 8);
+    controlWord_ |= (1 << 8);
   }
   // if (endlessMovement_) {
   //   rawControlword |= (1 << 15);
   // }
 
-  return rawControlword;
+  return controlWord_;
+}
+
+void Controlword::set(int bit)
+{
+  controlWord_ |= 1 << bit;
+}
+
+void Controlword::reset(int bit)
+{
+  controlWord_ &= ~(1 << bit);
 }
 
 void Controlword::setStateTransition2() {
