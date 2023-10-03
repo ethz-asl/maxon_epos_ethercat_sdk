@@ -99,6 +99,17 @@ struct TxPdoPPM {
   int32_t actualPosition_;
   int32_t actualVelocity_;
   uint8_t modeOfOperation_;
+  uint16_t digInLogicState_;
+} __attribute__((packed));
+
+struct TxPdoPVMPPM {
+  uint16_t statusword_;
+  int32_t demandPosition_;
+  int32_t demandVelocity_;
+  int32_t actualPosition_;
+  int32_t actualVelocity_;
+  uint32_t digitalInputState_;
+  uint8_t modeOfOperation_;
 } __attribute__((packed));
 
 }  // namespace maxon

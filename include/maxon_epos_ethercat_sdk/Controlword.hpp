@@ -52,6 +52,7 @@ struct Controlword {
 
   void set(int bit);
   void reset(int bit);
+  bool getbit(uint8_t bit);
   /*!
    * get the control word as a 16 bit unsigned integer
    * THIS DOES NOT RESPECT THE MODE SPECIFIC OPTIONS!

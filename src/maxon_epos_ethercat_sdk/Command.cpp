@@ -214,7 +214,9 @@ void Command::setProfileDeccel(double profileDeccel) {
 void Command::setProfileVelocity(double profileVelocity) {
   profileVelocityUU_ = profileVelocity;
 }
-
+void Command::setZAxisPosition(double AxisPosition){
+  zAxisPositionUU_ = AxisPosition;
+}
 
 /*!
  * factors set methods
@@ -267,6 +269,7 @@ double Command::getVelocityOffset() const { return velocityOffsetUU_; }
 double Command::getProfileVelocity() const { return profileVelocityUU_; }
 double Command::getProfileAccel() const { return profileAccelUU_; }
 double Command::getProfileDeccel() const { return profileDeccelUU_; }
+double Command::getZAxisPosition () const {return zAxisPositionUU_;}
 
 void Command::doUnitConversion() {
   if (!useRawCommands_) {
@@ -289,7 +292,7 @@ void Command::doUnitConversion() {
                                             profileAccelUU_);
     profileVelocity_ = static_cast<uint32_t>(velocityFactorRadPerSecToMicroRPM_ *
                                            profileVelocityUU_);
-
+    zAxisPosition_=static_cast<uint32_t>(convFactorIncrToMeterZAxis_* zAxisPositionUU_);
   }
 }
 

@@ -109,6 +109,9 @@ bool Maxon::startup() {
                             static_cast<int8_t>(-3),
                             configuration_.configRunSdoVerifyTimeout);
 
+  // write the configuration parameters via Sdo
+  success &= configParam();
+
   // Set initial mode of operation
   success &=
       sdoVerifyWrite(OD_INDEX_MODES_OF_OPERATION, 0x00, false,
@@ -118,8 +121,7 @@ bool Maxon::startup() {
   // To be on the safe side: set currect PDO sizes
   autoConfigurePdoSizes();
 
-  // write the configuration parameters via Sdo
-  success &= configParam();
+
 
   if (!success) {
     MELO_ERROR_STREAM(
@@ -292,6 +294,26 @@ void Maxon::updateWrite() {
       bus_->writeRxPdo(address_, rxPdo);
       break;
     }
+    case RxPdoTypeEnum::RxPdoPVMPPM: {
+      RxPdoPVMPPM rxPdo{};
+      {
+        std::lock_guard<std::recursive_mutex> lock(stagedCommandMutex_);
+        rxPdo.controlWord_ = controlword_.getRawControlword();
+        rxPdo.profileAccel_ = stagedCommand_.getProfileAccelRaw();
+        rxPdo.profileDeccel_ = stagedCommand_.getProfileDeccelRaw();
+        rxPdo.profileVelocity_ = stagedCommand_.getProfileVelocityRaw();
+        rxPdo.targetPosition_ = stagedCommand_.getTargetPositionRaw();
+        rxPdo.targetVelocity_ = stagedCommand_.getTargetVelocityRaw();
+        rxPdo.motionProfileType_ = stagedCommand_.getMotionProfileType();
+        rxPdo.modeOfOperation_ = static_cast<int8_t>(stagedCommand_.getModeOfOperation());
+
+        //std::cout << "Target: " << rxPdo.targetPosition_ << ", Acc.: " << rxPdo.profileAccel_ << " \n";
+      }
+
+      // actually writing to the hardware
+      bus_->writeRxPdo(address_, rxPdo);
+      break;
+    }
 
     default:
       MELO_ERROR_STREAM(
@@ -302,6 +324,7 @@ void Maxon::updateWrite() {
   }
 }
 
+   
 maxon::Controlword *Maxon::getControlword()
 {
   return &controlword_;
@@ -406,6 +429,23 @@ void Maxon::updateRead() {
         reading_.setActualPosition(txPdo.actualPosition_);
         reading_.setActualVelocity(txPdo.actualVelocity_);
         reading_.setModeOfOperationDisplay(txPdo.modeOfOperation_);
+        reading_.setDigitalInputs(txPdo.digInLogicState_);
+      }
+      break;
+    }
+    case TxPdoTypeEnum:: TxPdoPVMPPM:{
+      TxPdoPVMPPM txPdo{};
+      // reading from the bus
+      bus_->readTxPdo(address_, txPdo);
+      {
+        std::lock_guard<std::recursive_mutex> lock(readingMutex_);
+        reading_.setDemandPosition(txPdo.demandPosition_);
+        reading_.setStatusword(txPdo.statusword_);
+        reading_.setActualPosition(txPdo.actualPosition_);
+        reading_.setActualVelocity(txPdo.actualVelocity_);
+        reading_.setModeOfOperationDisplay(txPdo.modeOfOperation_);
+        reading_.setDigitalInputs(txPdo.digitalInputState_);
+        reading_.setDemandVelocity(txPdo.demandVelocity_);
       }
       break;
     }

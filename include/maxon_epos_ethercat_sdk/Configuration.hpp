@@ -76,6 +76,13 @@ class Configuration {
   double positionDGainSI{0.016};
   double velocityPGainSI{0.02};
   double velocityIGainSI{0.5};
+  int8_t homingMethod {-3};
+  uint16_t currentThreshold{0};
+  uint32_t homingSpeeds{10};
+  uint32_t homingAccel{1};
+  uint32_t homeOffsetMoveDistance{0};
+  uint32_t homePosition{0};
+
 
  public:
   // stream operator

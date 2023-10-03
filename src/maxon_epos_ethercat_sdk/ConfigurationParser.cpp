@@ -327,6 +327,30 @@ void ConfigurationParser::parseConfiguration(YAML::Node configNode) {
     if (getValueFromFile(hardwareNode, "velocity_i_gain", velcityIGainSI)) {
       configuration_.velocityIGainSI = velcityIGainSI;
     }
+    int homingMethodC;
+    if(getValueFromFile(hardwareNode, "homing_method", homingMethodC)){
+      configuration_.homingMethod = static_cast<int8_t>(homingMethodC);
+    }
+    uint16_t currentThresholdC;
+    if (getValueFromFile(hardwareNode, "current_threshold", currentThresholdC)) {
+      configuration_.currentThreshold = currentThresholdC;
+    }
+    uint32_t homingSpeedsC;
+    if (getValueFromFile(hardwareNode, "homing_speeds", homingSpeedsC)) {
+      configuration_.homingSpeeds = homingSpeedsC;
+    }
+    int32_t homingAccelC;
+    if (getValueFromFile(hardwareNode, "homing_accel", homingAccelC)) {
+      configuration_.homingAccel = homingAccelC;
+    }
+    int32_t homeOffsetMoveDistanceC;
+    if (getValueFromFile(hardwareNode, "home_offset_move_distance", homeOffsetMoveDistanceC)) {
+      configuration_.homeOffsetMoveDistance = homeOffsetMoveDistanceC;
+    }
+    int32_t homePositionC;
+    if (getValueFromFile(hardwareNode, "home_position", homePositionC)) {
+      configuration_.homePosition = homePositionC;
+    }
   }
 }
 

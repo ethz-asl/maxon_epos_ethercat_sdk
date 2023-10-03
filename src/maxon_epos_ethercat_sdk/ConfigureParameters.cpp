@@ -36,6 +36,8 @@
 #include "maxon_epos_ethercat_sdk/Maxon.hpp"
 #include "maxon_epos_ethercat_sdk/ObjectDictionary.hpp"
 
+#include <soem_interface/EthercatBusBase.hpp>
+
 namespace maxon {
 bool Maxon::mapPdos(RxPdoTypeEnum rxPdoTypeEnum, TxPdoTypeEnum txPdoTypeEnum) {
   uint8_t subIndex;
@@ -92,10 +94,8 @@ bool Maxon::mapPdos(RxPdoTypeEnum rxPdoTypeEnum, TxPdoTypeEnum txPdoTypeEnum) {
           (OD_INDEX_OFFSET_POSITION << 16) | (0x00 << 8) | sizeof(int32_t) * 8,
           (OD_INDEX_OFFSET_TORQUE << 16) | (0x00 << 8) | sizeof(int16_t) * 8,
           (OD_INDEX_CONTROLWORD << 16) | (0x00 << 8) | sizeof(int16_t) * 8,
-          (OD_INDEX_MODES_OF_OPERATION << 16) | (0x00 << 8) |
-              sizeof(int8_t) * 8,
+          (OD_INDEX_MODES_OF_OPERATION << 16) | (0x00 << 8) | sizeof(int8_t) * 8,
       };
-
       subIndex = 0;
       for (const auto& objectIndex : objects) {
         subIndex += 1;
@@ -411,6 +411,58 @@ bool Maxon::mapPdos(RxPdoTypeEnum rxPdoTypeEnum, TxPdoTypeEnum txPdoTypeEnum) {
                                   configuration_.configRunSdoVerifyTimeout);
 
       break;
+    }
+    case RxPdoTypeEnum::RxPdoPVMPPM:{
+      MELO_INFO_STREAM("[maxon_epos_ethercat_sdk:Maxon::mapPdos] Rx Pdo: "
+                       << "Profile Position Mode/ Profile Velocity Mode");
+
+      // Disable PDO
+      rxSuccess &= sdoVerifyWrite(OD_INDEX_RX_PDO_ASSIGNMENT, 0x00, false,
+                                  static_cast<uint8_t>(0),
+                                  configuration_.configRunSdoVerifyTimeout);
+
+      rxSuccess &= sdoVerifyWrite(OD_INDEX_RX_PDO_MAPPING_3, 0x00, false,
+                                  static_cast<uint8_t>(0),
+                                  configuration_.configRunSdoVerifyTimeout);
+
+      // Write mapping
+      rxSuccess &= sdoVerifyWrite(OD_INDEX_RX_PDO_ASSIGNMENT, 0x01, false,
+                                  OD_INDEX_RX_PDO_MAPPING_3,
+                                  configuration_.configRunSdoVerifyTimeout);
+
+      // Write objects...
+      std::array<uint32_t, 8> objects{
+          (OD_INDEX_CONTROLWORD << 16) | (0x00 << 8) | sizeof(int16_t) * 8,
+          (OD_INDEX_TARGET_POSITION << 16) | (0x00 << 8) | sizeof(int32_t) * 8,
+          (OD_INDEX_TARGET_VELOCITY << 16) | (0x00 << 8) | sizeof(int32_t) * 8,
+          (OD_INDEX_PROFILE_VELOCITY << 16) | (0x00 << 8) | sizeof(uint32_t) * 8,
+          (OD_INDEX_PROFILE_ACCELERATION << 16) | (0x00 << 8) | sizeof(uint32_t) * 8,
+          (OD_INDEX_PROFILE_DECELERATION << 16) | (0x00 << 8) | sizeof(uint32_t) * 8,
+          (OD_INDEX_MOTION_PROFILE_TYPE << 16) | (0x00 << 8) | sizeof(int16_t) * 8,
+          (OD_INDEX_MODES_OF_OPERATION << 16) | (0x00 << 8) | sizeof(int8_t) * 8,
+      };
+
+
+
+      subIndex = 0;
+      for (const auto& objectIndex : objects) {
+        subIndex += 1;
+        rxSuccess &= sdoVerifyWrite(OD_INDEX_RX_PDO_MAPPING_3, subIndex, false,
+                                    objectIndex,
+                                    configuration_.configRunSdoVerifyTimeout);
+      }
+
+      // Write number of objects
+      rxSuccess &=
+          sdoVerifyWrite(OD_INDEX_RX_PDO_MAPPING_3, 0x00, false, subIndex,
+                         configuration_.configRunSdoVerifyTimeout);
+
+      // Enable PDO
+      rxSuccess &= sdoVerifyWrite(OD_INDEX_RX_PDO_ASSIGNMENT, 0x00, false,
+                                  static_cast<uint8_t>(1),
+                                  configuration_.configRunSdoVerifyTimeout);
+
+      break;      
     }
     case RxPdoTypeEnum::NA:
       MELO_ERROR_STREAM(
@@ -754,12 +806,13 @@ bool Maxon::mapPdos(RxPdoTypeEnum rxPdoTypeEnum, TxPdoTypeEnum txPdoTypeEnum) {
                                   configuration_.configRunSdoVerifyTimeout);
 
       // Write objects...
-      std::array<uint32_t, 5> objects{
+      std::array<uint32_t, 6> objects{
           (OD_INDEX_STATUSWORD << 16) | (0x00 << 8) | sizeof(uint16_t) * 8,
           (OD_INDEX_POSITION_DEMAND << 16) | (0x00 << 8) | sizeof(int32_t) * 8,
           (OD_INDEX_POSITION_ACTUAL << 16) | (0x00 << 8) | sizeof(int32_t) * 8,
           (OD_INDEX_VELOCITY_ACTUAL << 16) | (0x00 << 8) | sizeof(int32_t) * 8,
           (OD_INDEX_MODES_OF_OPERATION_DISPLAY<< 16) | (0x00 << 8) | sizeof(int8_t) * 8,
+          (OD_INDEX_DIGITAL_INPUTS<<16) | (0x00 << 8) | sizeof(uint32_t) * 8,
       };
 
       subIndex = 0;
@@ -782,6 +835,58 @@ bool Maxon::mapPdos(RxPdoTypeEnum rxPdoTypeEnum, TxPdoTypeEnum txPdoTypeEnum) {
 
       break;
     }
+        case TxPdoTypeEnum::TxPdoPVMPPM: {
+      // (OD_INDEX_TORQUE_ACTUAL << 16) | (0x01 << 8) | sizeof(int16_t) * 8
+
+      MELO_INFO_STREAM("[maxon_epos_ethercat_sdk:Maxon::mapPdos] Tx Pdo: "
+                        << "Profile Position Mode/ Profile Velocity Mode");
+
+      // Disable PDO
+      txSuccess &= sdoVerifyWrite(OD_INDEX_TX_PDO_ASSIGNMENT, 0x00, false,
+                                  static_cast<uint8_t>(0),
+                                  configuration_.configRunSdoVerifyTimeout);
+
+      txSuccess &= sdoVerifyWrite(OD_INDEX_TX_PDO_MAPPING_3, 0x00, false,
+                                  static_cast<uint8_t>(0),
+                                  configuration_.configRunSdoVerifyTimeout);
+
+      // Write mapping
+      txSuccess &= sdoVerifyWrite(OD_INDEX_TX_PDO_ASSIGNMENT, 0x01, false,
+                                  OD_INDEX_TX_PDO_MAPPING_3,
+                                  configuration_.configRunSdoVerifyTimeout);
+
+      // Write objects...
+      std::array<uint32_t, 7> objects{
+          (OD_INDEX_STATUSWORD << 16) | (0x00 << 8) | sizeof(uint16_t) * 8,
+          (OD_INDEX_POSITION_DEMAND << 16) | (0x00 << 8) | sizeof(int32_t) * 8,
+          (OD_INDEX_VELOCITY_DEMAND << 16) | (0x00 << 8) | sizeof(int32_t) * 8,
+          (OD_INDEX_POSITION_ACTUAL << 16) | (0x00 << 8) | sizeof(int32_t) * 8,
+          (OD_INDEX_VELOCITY_ACTUAL << 16) | (0x00 << 8) | sizeof(int32_t) * 8,
+          (OD_INDEX_DIGITAL_INPUTS << 16)  | (0x00 << 8) | sizeof(uint32_t) * 8,
+          (OD_INDEX_MODES_OF_OPERATION_DISPLAY<< 16) | (0x00 << 8) | sizeof(int8_t) * 8,
+      };
+
+      subIndex = 0;
+      for (const auto& objectIndex : objects) {
+        subIndex += 1;
+        txSuccess &= sdoVerifyWrite(OD_INDEX_TX_PDO_MAPPING_3, subIndex, false,
+                                    objectIndex,
+                                    configuration_.configRunSdoVerifyTimeout);
+      }
+
+      // Write number of objects
+      txSuccess &=
+          sdoVerifyWrite(OD_INDEX_TX_PDO_MAPPING_3, 0x00, false, subIndex,
+                          configuration_.configRunSdoVerifyTimeout);
+
+      // Enable PDO
+      txSuccess &= sdoVerifyWrite(OD_INDEX_TX_PDO_ASSIGNMENT, 0x00, false,
+                                  static_cast<uint8_t>(1),
+                                  configuration_.configRunSdoVerifyTimeout);
+
+      break;
+    }
+
     case TxPdoTypeEnum::NA:
       MELO_ERROR_STREAM(
           "[maxon_epos_ethercat_sdk:Maxon::mapPdos] Cannot map "
@@ -816,35 +921,76 @@ bool Maxon::configParam() {
   uint32_t positionDGain;
   uint32_t velocityPGain;
   uint32_t velocityIGain;
+  int8_t   homingMethod;
+  uint16_t currentThreshold;
+  uint32_t homingSpeeds;
+  uint32_t homingAccel;
+  uint32_t homeOffsetMoveDistance;
+  uint32_t homePosition;
 
   // Set velocity unit to micro revs per minute
   uint32_t velocity_unit;
-  //velocity_unit = 0xFAB44700;
+  velocity_unit = 0xFAB44700;
 
-  velocity_unit = 0xFDB44700;
+  //velocity_unit = 0xFDB44700;   // 0.001 revolutions/minute
   
   configSuccess &=
       sdoVerifyWrite(OD_INDEX_SI_UNIT_VELOCITY, 0x00, false, velocity_unit,
                      configuration_.configRunSdoVerifyTimeout);
 
-  /*
-  maxMotorSpeed = static_cast<uint32_t>(configuration_.workVoltage *
-                                        configuration_.speedConstant);
-  configSuccess &=
-      sdoVerifyWrite(OD_INDEX_MAX_MOTOR_SPEED, 0x00, false, maxMotorSpeed,
-                     configuration_.configRunSdoVerifyTimeout);
+  //set Homing method to Homing Method -3 (Current Threshold Positive Speed)
+  homingMethod = static_cast<int8_t>(configuration_.homingMethod);
+  
+  //sendSdoRead(OF_INDEX_HOMING_METHOD, 0x00, false, homingMethod);
+  //std::cout << "homing method:  \n";
 
-  maxProfileVelocity = static_cast<uint32_t>(configuration_.maxProfileVelocity *
-                                             60.0 * 1e6 / (2 * M_PI));
+  
+  configSuccess &= sdoVerifyWrite(OD_INDEX_HOMING_METHOD, 0x00, false, homingMethod, configuration_.configRunSdoVerifyTimeout);
+
+  //printf("Homing method: %d \n" ,temp);
+
+  //Used for homing methods «−1», «−2», «−3», and «−4». A mechanical border will 
+  //be detected when the measured motor current rises above the specified threshold [mA].
+  currentThreshold = static_cast<uint16_t>(configuration_.currentThreshold);
+  configSuccess &= sdoVerifyWrite(OD_INDEX_CURRENT_THRESHOLD, 0x00, false,currentThreshold, configuration_.configRunSdoVerifyTimeout);
+
+  //homing speeds Speed for switch search
+  homingSpeeds = static_cast<uint32_t>(configuration_.homingSpeeds);
+  configSuccess &= sdoVerifyWrite(OD_INDEX_HOMING_SPEEDS, 0x01, false,homingSpeeds, configuration_.configRunSdoVerifyTimeout);
+
+  //Specifies the acceleration during Homing
+  homingAccel = static_cast<uint32_t>(configuration_.homingAccel);
+  configSuccess &= sdoVerifyWrite(OD_INDEX_HOMING_ACCEL, 0x00, false,homingAccel, configuration_.configRunSdoVerifyTimeout);
+
+  // it is useful to move away from a detected position (for example mechanical limit stop or limit switch)
+  homeOffsetMoveDistance = static_cast<uint32_t>(configuration_.homeOffsetMoveDistance);
+  configSuccess &= sdoVerifyWrite(OD_INDEX_HOME_OFFSET_MOVE_DISTANCE, 0x00, false,homeOffsetMoveDistance, configuration_.configRunSdoVerifyTimeout);
+
+  // Defines the position that will be set as zero position of the absolute position counte
+  homePosition = static_cast<uint32_t>(configuration_.homePosition);
+  configSuccess &= sdoVerifyWrite(OD_INDEX_HOME_POSITON, 0x00, false,homePosition, configuration_.configRunSdoVerifyTimeout);
+  
+  /*
+  
+  configSuccess &=
+      sdoVerifyWrite(OD_INDEX_MAX_MOTOR_SPEED, 0x00, false, configuration_.maxProfileVelocity,
+                     configuration_.configRunSdoVerifyTimeout);
+  */
+  /*
+  maxProfileVelocity = static_cast<uint32_t>(configuration_.maxProfileVelocity);
 
   configSuccess &= sdoVerifyWrite(OD_INDEX_MAX_PROFILE_VELOCITY, 0x00, false,
                                   maxProfileVelocity,
                                   configuration_.configRunSdoVerifyTimeout);
-
+  */
+  /*
   maxGearSpeed =
-      static_cast<uint32_t>(maxMotorSpeed / configuration_.gearRatio);
+      static_cast<uint32_t>(configuration_.maxProfileVelocity / 27.6);
   configSuccess &= sdoVerifyWrite(OD_INDEX_GEAR_DATA, 0x03, false, maxGearSpeed,
                                   configuration_.configRunSdoVerifyTimeout);
+  */
+  /*
+
 
   configSuccess &= sdoVerifyWrite(OD_INDEX_SOFTWARE_POSITION_LIMIT, 0x01, false,
                                   configuration_.minPosition);
@@ -904,11 +1050,11 @@ bool Maxon::configParam() {
   configSuccess &= sdoVerifyWrite(OD_INDEX_PROFILE_DECELERATION, 0x00, false,
                                   configuration_.profileDecel,
                                   configuration_.configRunSdoVerifyTimeout);
-
+*/
   configSuccess &= sdoVerifyWrite(OD_INDEX_FOLLOW_ERROR_WINDOW, 0x00, false,
                                   configuration_.followErrorWindow,
                                   configuration_.configRunSdoVerifyTimeout);
-
+/*
   velocityPGain =
       static_cast<uint32_t>(1000000 * configuration_.velocityPGainSI);
   configSuccess &= sdoVerifyWrite(OD_INDEX_VELOCITY_CONTROL_PARAM, 0x01, false,

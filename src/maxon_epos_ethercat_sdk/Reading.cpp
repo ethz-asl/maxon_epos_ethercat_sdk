@@ -119,10 +119,13 @@ double Reading::getAnalogInput() const {
   return static_cast<double>(analogInput_) * 0.001;
 }
 
+double Reading::getZAxisPosition () const{
+  return static_cast<double>(actualPosition_)/convFactorIncrToMeterZAxis_;
+}
 /*!
  * Other readings
  */
-int32_t Reading::getDigitalInputs() const { return digitalInputs_; }
+uint32_t Reading::getDigitalInputs() const { return digInLogicState_; }
 Statusword Reading::getStatusword() const {
   Statusword statusword;
   statusword.setFromRawStatusword(statusword_);
@@ -141,8 +144,8 @@ void Reading::setModeOfOperationDisplay(int8_t modeOfOperation) {modeOfOperation
 void Reading::setActualPosition(int32_t actualPosition) {
   actualPosition_ = actualPosition;
 }
-void Reading::setDigitalInputs(int32_t digitalInputs) {
-  digitalInputs_ = digitalInputs;
+void Reading::setDigitalInputs(uint32_t digitalInputs) {
+  digInLogicState_ = digitalInputs;
 }
 void Reading::setActualVelocity(int32_t actualVelocity) {
   actualVelocity_ = actualVelocity;
@@ -174,6 +177,10 @@ void Reading::setTorqueFactorIntegerToNm(double torqueFactor) {
   torqueFactorIntegerToNm_ = torqueFactor;
 }
 
+void Reading::setZAxisPosition(double AxisPosition){
+  zAxisPosition_= AxisPosition;
+}
+
 double Reading::getAgeOfLastErrorInMicroseconds() const {
   ReadingDuration errorDuration = ReadingClock::now() - lastError_.second;
   return errorDuration.count();
@@ -183,6 +190,7 @@ double Reading::getAgeOfLastFaultInMicroseconds() const {
   ReadingDuration faultDuration = ReadingClock::now() - lastFault_.second;
   return faultDuration.count();
 }
+
 
 void Reading::addError(ErrorType errorType) {
   ErrorPair errorPair;

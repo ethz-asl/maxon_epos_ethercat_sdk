@@ -78,6 +78,8 @@ std::string rxPdoString(RxPdoTypeEnum rxPdo) {
       return "Rx PDO PVM";
     case RxPdoTypeEnum::RxPdoPPM:
       return "Rx PDO PPM";
+    case RxPdoTypeEnum::RxPdoPVMPPM:
+      return "Rx PDO PVMPPM";
     default:
       return "Unsupported Type";
   }
@@ -183,12 +185,24 @@ std::pair<RxPdoTypeEnum, TxPdoTypeEnum> Configuration::getPdoTypeSolution()
         { RxPdoTypeEnum::NA, TxPdoTypeEnum::NA }
       },
       {
+        { ModeOfOperationEnum::HomingMode, ModeOfOperationEnum::ProfiledPositionMode},
+        { RxPdoTypeEnum::RxPdoPPM, TxPdoTypeEnum::TxPdoPPM }
+      },
+      {
         { ModeOfOperationEnum::ProfiledVelocityMode },
         { RxPdoTypeEnum::RxPdoPVM, TxPdoTypeEnum::TxPdoPVM }
       },
       {
         { ModeOfOperationEnum::ProfiledPositionMode },
         { RxPdoTypeEnum::RxPdoPPM, TxPdoTypeEnum::TxPdoPPM }
+      },
+      {
+        {ModeOfOperationEnum::ProfiledVelocityMode, ModeOfOperationEnum::ProfiledPositionMode},
+        {RxPdoTypeEnum::RxPdoPVMPPM, TxPdoTypeEnum:: TxPdoPVMPPM}
+      },
+      {
+        {ModeOfOperationEnum::ProfiledPositionMode, ModeOfOperationEnum::ProfiledVelocityMode, ModeOfOperationEnum::HomingMode},
+        {RxPdoTypeEnum::RxPdoPVMPPM, TxPdoTypeEnum::TxPdoPVMPPM},
       },
       {
         { ModeOfOperationEnum::NA },

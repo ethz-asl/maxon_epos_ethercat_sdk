@@ -88,11 +88,12 @@ class Reading {
   double getAnalogInput() const;
   double getAgeOfLastReadingInMicroseconds() const;
   double getBusVoltage() const;
-
+  double getZAxisPosition() const;
+  
   /*!
    * Other get methods
    */
-  int32_t getDigitalInputs() const;
+  uint32_t getDigitalInputs() const;
   Statusword getStatusword() const;
   std::string getDigitalInputString() const;
   DriveState getDriveState() const;
@@ -102,7 +103,7 @@ class Reading {
    */
   void setActualPosition(int32_t actualPosition);
 
-  void setDigitalInputs(int32_t digitalInputs);
+  void setDigitalInputs(uint32_t digInLogicState);
 
   void setActualVelocity(int32_t actualVelocity);
 
@@ -128,6 +129,8 @@ class Reading {
 
   void setModeOfOperationDisplay(int8_t modeOfOperation);
 
+  void setZAxisPosition (double AxisPosition);
+
  protected:
   int32_t actualPosition_{0};
   int32_t digitalInputs_{0};
@@ -138,6 +141,8 @@ class Reading {
   int16_t analogInput_{0};
   int16_t actualCurrent_{0};
   uint32_t busVoltage_{0};
+  uint32_t digInLogicState_{0};
+  double zAxisPosition_{0};
 
   int8_t modeOfOperationDisp_{0};
 
@@ -146,7 +151,7 @@ class Reading {
       2.0 * M_PI / (60.0 * 1e6);
   double currentFactorIntegerToAmp_{1};
   double torqueFactorIntegerToNm_{1};
-
+  uint32_t convFactorIncrToMeterZAxis_{22080000};
 
 
 
