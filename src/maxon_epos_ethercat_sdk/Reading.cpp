@@ -54,6 +54,54 @@ std::ostream& operator<<(std::ostream& os, const maxon::Reading& reading) {
 }
 
 namespace maxon {
+
+Reading::Reading(const Reading& other)
+{
+  actualPosition_ = other.actualPosition_;
+  actualVelocity_ = other.actualVelocity_;
+  demandVelocity_ = other.demandVelocity_;
+  demandPosition_ = other.demandPosition_;;
+  statusword_= other.statusword_;
+  analogInput_ = other.analogInput_;
+  actualCurrent_ = other.actualCurrent_;
+  busVoltage_ = other.busVoltage_;
+  digInLogicState_ = other.digInLogicState_;
+  modeOfOperationDisp_ = other.modeOfOperationDisp_;
+
+  positionFactorIntegerToRad_ = other.positionFactorIntegerToRad_;
+  currentFactorIntegerToAmp_ = other.positionFactorIntegerToRad_;
+  torqueFactorIntegerToNm_ = other.torqueFactorIntegerToNm_;
+  sensorConfigFactor_ = other.sensorConfigFactor_;
+
+
+
+  lastReadingTimePoint_ = other.lastReadingTimePoint_;
+}
+
+Reading& Reading::operator=(const Reading& other)
+{
+  actualPosition_ = other.actualPosition_;
+  actualVelocity_ = other.actualVelocity_;
+  demandVelocity_ = other.demandVelocity_;
+  demandPosition_ = other.demandPosition_;;
+  statusword_= other.statusword_;
+  analogInput_ = other.analogInput_;
+  actualCurrent_ = other.actualCurrent_;
+  busVoltage_ = other.busVoltage_;
+  digInLogicState_ = other.digInLogicState_;
+  modeOfOperationDisp_ = other.modeOfOperationDisp_;
+
+  positionFactorIntegerToRad_ = other.positionFactorIntegerToRad_;
+  currentFactorIntegerToAmp_ = other.positionFactorIntegerToRad_;
+  torqueFactorIntegerToNm_ = other.torqueFactorIntegerToNm_;
+  sensorConfigFactor_ = other.sensorConfigFactor_;
+
+
+
+  lastReadingTimePoint_ = other.lastReadingTimePoint_;
+  return *this; 
+}
+
 std::string Reading::getDigitalInputString() const {
   std::string binString;
   for (unsigned int i = 0; i < 8 * sizeof(digitalInputs_); i++) {
@@ -97,31 +145,28 @@ uint32_t Reading::getBusVoltageRaw() const { return busVoltage_; }
  */
 
 double Reading::getActualPosition() const {
-  return static_cast<double>(actualPosition_) * positionFactorIntegerToRad_;
+    return static_cast<double>(actualPosition_) * positionFactorIntegerToRad_ / sensorConfigFactor_;
 }
 double Reading::getActualVelocity() const {
   return static_cast<double>(actualVelocity_) *
-         velocityFactorMicroRPMToRadPerSec_;
+         velocityFactorMilliRPMToRadPerSec_ / sensorConfigFactor_;
 }
 double Reading::getActualCurrent() const {
   return static_cast<double>(actualCurrent_) * currentFactorIntegerToAmp_;
 }
 double Reading::getActualTorque() const {
-  return static_cast<double>(actualCurrent_) * torqueFactorIntegerToNm_;
+  return static_cast<double>(actualCurrent_) * torqueFactorIntegerToNm_ * sensorConfigFactor_;
 }
 double Reading::getDemandVelocity() const {
-  return static_cast<double>(demandVelocity_) * velocityFactorMicroRPMToRadPerSec_;
+  return static_cast<double>(demandVelocity_) * velocityFactorMilliRPMToRadPerSec_ / sensorConfigFactor_;
 }
 double Reading::getDemandPosition() const {
-  return static_cast<double>(demandPosition_) * positionFactorIntegerToRad_;
+  return static_cast<double>(demandPosition_) * positionFactorIntegerToRad_ * sensorConfigFactor_;
 }
 double Reading::getAnalogInput() const {
   return static_cast<double>(analogInput_) * 0.001;
 }
 
-double Reading::getZAxisPosition () const{
-  return static_cast<double>(actualPosition_)/convFactorIncrToMeterZAxis_;
-}
 /*!
  * Other readings
  */
@@ -176,9 +221,8 @@ void Reading::setCurrentFactorIntegerToAmp(double currentFactor) {
 void Reading::setTorqueFactorIntegerToNm(double torqueFactor) {
   torqueFactorIntegerToNm_ = torqueFactor;
 }
-
-void Reading::setZAxisPosition(double AxisPosition){
-  zAxisPosition_= AxisPosition;
+void Reading::setSensorConfigFactor(double factor) {
+  sensorConfigFactor_ = factor;
 }
 
 double Reading::getAgeOfLastErrorInMicroseconds() const {
@@ -190,7 +234,6 @@ double Reading::getAgeOfLastFaultInMicroseconds() const {
   ReadingDuration faultDuration = ReadingClock::now() - lastFault_.second;
   return faultDuration.count();
 }
-
 
 void Reading::addError(ErrorType errorType) {
   ErrorPair errorPair;
@@ -283,6 +326,7 @@ void Reading::configureReading(const Configuration& configuration) {
 
   double currentFactor = configuration.nominalCurrentA / 1000.0;
 
+  sensorConfigFactor_ = configuration.sensorPositionCorrection;
   currentFactorIntegerToAmp_ = currentFactor;
   positionFactorIntegerToRad_ =
       (2.0 * M_PI) /

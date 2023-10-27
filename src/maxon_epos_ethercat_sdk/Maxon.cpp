@@ -85,16 +85,7 @@ bool Maxon::startup() {
 
   // use hardware motor rated current value if necessary
   // TODO test
-  if (configuration_.nominalCurrentA == 0.0) {
-    uint32_t nominalCurrent;
-    success &= sendSdoRead(OD_INDEX_MOTOR_DATA, 0x02, false, nominalCurrent);
-    // update the configuration to accomodate the new motor
-    // rated current value
-    configuration_.nominalCurrentA =
-        static_cast<double>(nominalCurrent) / 1000.0;
-    // update the reading_ object to ensure correct unit conversion
-    reading_.configureReading(configuration_);
-  }
+
   // success &= setDriveStateViaSdo(DriveState::ReadyToSwitchOn);
 
   // PDO mapping
@@ -109,9 +100,6 @@ bool Maxon::startup() {
                             static_cast<int8_t>(-3),
                             configuration_.configRunSdoVerifyTimeout);
 
-  // write the configuration parameters via Sdo
-  success &= configParam();
-
   // Set initial mode of operation
   success &=
       sdoVerifyWrite(OD_INDEX_MODES_OF_OPERATION, 0x00, false,
@@ -121,7 +109,22 @@ bool Maxon::startup() {
   // To be on the safe side: set currect PDO sizes
   autoConfigurePdoSizes();
 
+  // write the configuration parameters via Sdo
+  success &= configParam();
 
+  if (configuration_.nominalCurrentA == 0.0) {
+    uint32_t nominalCurrent;
+    success &= sendSdoRead(OD_INDEX_MOTOR_DATA, 0x02, false, nominalCurrent);
+    // update the configuration to accomodate the new motor
+    // rated current value
+    configuration_.nominalCurrentA =
+        static_cast<double>(nominalCurrent) / 1000.0;
+    // update the reading_ object to ensure correct unit conversion
+
+  }
+
+  printf("Sensor resolution: %d\n", configuration_.positionEncoderResolution);
+  reading_.configureReading(configuration_);
 
   if (!success) {
     MELO_ERROR_STREAM(
@@ -314,7 +317,6 @@ void Maxon::updateWrite() {
       bus_->writeRxPdo(address_, rxPdo);
       break;
     }
-
     default:
       MELO_ERROR_STREAM(
           "[maxon_epos_ethercat_sdk:Maxon::updateWrite] "
@@ -324,7 +326,6 @@ void Maxon::updateWrite() {
   }
 }
 
-   
 maxon::Controlword *Maxon::getControlword()
 {
   return &controlword_;
@@ -433,19 +434,20 @@ void Maxon::updateRead() {
       }
       break;
     }
-    case TxPdoTypeEnum:: TxPdoPVMPPM:{
+    case TxPdoTypeEnum::TxPdoPVMPPM: {
       TxPdoPVMPPM txPdo{};
       // reading from the bus
       bus_->readTxPdo(address_, txPdo);
       {
         std::lock_guard<std::recursive_mutex> lock(readingMutex_);
         reading_.setDemandPosition(txPdo.demandPosition_);
+        reading_.setDemandVelocity(txPdo.demandVelocity_);
         reading_.setStatusword(txPdo.statusword_);
         reading_.setActualPosition(txPdo.actualPosition_);
         reading_.setActualVelocity(txPdo.actualVelocity_);
+        reading_.setActualCurrent(txPdo.actualCurrent_);
         reading_.setModeOfOperationDisplay(txPdo.modeOfOperation_);
-        reading_.setDigitalInputs(txPdo.digitalInputState_);
-        reading_.setDemandVelocity(txPdo.demandVelocity_);
+        reading_.setDigitalInputs(txPdo.digInLogicState_);
       }
       break;
     }
@@ -478,9 +480,9 @@ void Maxon::updateRead() {
 void Maxon::stageCommand(const Command& command) {
   std::lock_guard<std::recursive_mutex> lock(stagedCommandMutex_);
   stagedCommand_ = command;
+  stagedCommand_.setSensorConfigFactor(configuration_.sensorPositionCorrection);
   stagedCommand_.setPositionFactorRadToInteger(
-      static_cast<double>(configuration_.positionEncoderResolution) /
-      (2.0 * M_PI));
+      static_cast<double>(configuration_.positionEncoderResolution)/(2.0 * M_PI));
 
   double currentFactorAToInt = 1000.0 / configuration_.nominalCurrentA;
   stagedCommand_.setCurrentFactorAToInteger(currentFactorAToInt);
@@ -491,6 +493,7 @@ void Maxon::stageCommand(const Command& command) {
   stagedCommand_.setUseRawCommands(configuration_.useRawCommands);
 
   stagedCommand_.doUnitConversion();
+
 
   const auto targetMode = command.getModeOfOperation();
   if (std::find(configuration_.modesOfOperation.begin(),
@@ -533,9 +536,7 @@ bool Maxon::loadConfiguration(const Configuration& configuration) {
   txPdoTypeEnum_ = pdoTypeSolution.second;
   configuration_ = configuration;
 
-  MELO_INFO_STREAM("[maxon_epos_ethercat_sdk] Sanity check for '" << name_
-                                                                  << "':");
-  return configuration.sanityCheck();
+  return true;
 }
 
 Configuration Maxon::getConfiguration() const { return configuration_; }

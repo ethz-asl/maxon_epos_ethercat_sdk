@@ -46,10 +46,12 @@ template <typename T>
 bool getValueFromFile(YAML::Node& yamlNode, const std::string& varName,
                       T& var) {
   if (!yamlNode[varName].IsDefined()) {
-    MELO_WARN_STREAM(
+    /*
+        MELO_WARN_STREAM(
         "[maxon_epos_ethercat_sdk:ConfigurationParser::parseConfiguration]: "
         "field '"
         << varName << "' is missing. Default value will be used.");
+    */
     return false;
   }
   try {
@@ -155,6 +157,10 @@ void ConfigurationParser::parseConfiguration(YAML::Node configNode) {
       configuration_.useRawCommands = useRawCommands;
     }
 
+    bool useControllerParams;
+    if (getValueFromFile(maxonNode, "use_params_from_controller", useControllerParams)) {
+      configuration_.useControllerParams = useControllerParams;
+    }
     unsigned int driveStateChangeMinTimeout;
     if (getValueFromFile(maxonNode, "drive_state_change_min_timeout",
                          driveStateChangeMinTimeout)) {
@@ -241,7 +247,7 @@ void ConfigurationParser::parseConfiguration(YAML::Node configNode) {
       configuration_.speedConstant = speedConstant;
     }
 
-    double polePairs;
+    uint32_t polePairs;
     if (getValueFromFile(hardwareNode, "pole_pairs", polePairs)) {
       configuration_.polePairs = polePairs;
     }
@@ -261,17 +267,17 @@ void ConfigurationParser::parseConfiguration(YAML::Node configNode) {
       configuration_.torqueConstantNmA = torqueConstantNmA;
     }
 
-    int32_t minPosition;
+    double minPosition;
     if (getValueFromFile(hardwareNode, "min_position", minPosition)) {
       configuration_.minPosition = minPosition;
     }
 
-    int32_t maxPosition;
+    double maxPosition;
     if (getValueFromFile(hardwareNode, "max_position", maxPosition)) {
       configuration_.maxPosition = maxPosition;
     }
 
-    uint32_t maxProfileVelocity;
+    double maxProfileVelocity;
     if (getValueFromFile(hardwareNode, "max_profile_velocity",
                          maxProfileVelocity)) {
       configuration_.maxProfileVelocity = maxProfileVelocity;
@@ -327,6 +333,7 @@ void ConfigurationParser::parseConfiguration(YAML::Node configNode) {
     if (getValueFromFile(hardwareNode, "velocity_i_gain", velcityIGainSI)) {
       configuration_.velocityIGainSI = velcityIGainSI;
     }
+    
     int homingMethodC;
     if(getValueFromFile(hardwareNode, "homing_method", homingMethodC)){
       configuration_.homingMethod = static_cast<int8_t>(homingMethodC);

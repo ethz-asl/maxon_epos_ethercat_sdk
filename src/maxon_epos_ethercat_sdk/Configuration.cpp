@@ -79,7 +79,7 @@ std::string rxPdoString(RxPdoTypeEnum rxPdo) {
     case RxPdoTypeEnum::RxPdoPPM:
       return "Rx PDO PPM";
     case RxPdoTypeEnum::RxPdoPVMPPM:
-      return "Rx PDO PVMPPM";
+      return "Rx PDO PVM/PPM mixed mode";
     default:
       return "Unsupported Type";
   }
@@ -103,6 +103,8 @@ std::string txPdoString(TxPdoTypeEnum txPdo) {
       return "Tx PDO PVM";
     case TxPdoTypeEnum::TxPdoPPM:
       return "Tx PDO PPM";
+    case TxPdoTypeEnum::TxPdoPVMPPM:
+      return "Tx PDO PVM/PPM mixed mode";
     case TxPdoTypeEnum::TxPdoStandard:
       return "Tx PDO Standard";
     default:
@@ -189,20 +191,24 @@ std::pair<RxPdoTypeEnum, TxPdoTypeEnum> Configuration::getPdoTypeSolution()
         { RxPdoTypeEnum::RxPdoPPM, TxPdoTypeEnum::TxPdoPPM }
       },
       {
+        { ModeOfOperationEnum::HomingMode, ModeOfOperationEnum::ProfiledPositionMode, ModeOfOperationEnum::ProfiledVelocityMode},
+        { RxPdoTypeEnum::RxPdoPVMPPM, TxPdoTypeEnum::TxPdoPVMPPM }
+      },
+      {
+        { ModeOfOperationEnum::ProfiledPositionMode, ModeOfOperationEnum::ProfiledVelocityMode},
+        { RxPdoTypeEnum::RxPdoPVMPPM, TxPdoTypeEnum::TxPdoPVMPPM }
+      },
+      {
+        { ModeOfOperationEnum::ProfiledVelocityMode, ModeOfOperationEnum::ProfiledPositionMode},
+        { RxPdoTypeEnum::RxPdoPVMPPM, TxPdoTypeEnum::TxPdoPVMPPM }
+      },
+      {
         { ModeOfOperationEnum::ProfiledVelocityMode },
         { RxPdoTypeEnum::RxPdoPVM, TxPdoTypeEnum::TxPdoPVM }
       },
       {
         { ModeOfOperationEnum::ProfiledPositionMode },
         { RxPdoTypeEnum::RxPdoPPM, TxPdoTypeEnum::TxPdoPPM }
-      },
-      {
-        {ModeOfOperationEnum::ProfiledVelocityMode, ModeOfOperationEnum::ProfiledPositionMode},
-        {RxPdoTypeEnum::RxPdoPVMPPM, TxPdoTypeEnum:: TxPdoPVMPPM}
-      },
-      {
-        {ModeOfOperationEnum::ProfiledPositionMode, ModeOfOperationEnum::ProfiledVelocityMode, ModeOfOperationEnum::HomingMode},
-        {RxPdoTypeEnum::RxPdoPVMPPM, TxPdoTypeEnum::TxPdoPVMPPM},
       },
       {
         { ModeOfOperationEnum::NA },
@@ -252,7 +258,7 @@ bool Configuration::sanityCheck(bool silent) const {
   const std::vector<std::pair<bool, std::string>> sanity_tests = {
       {
         (polePairs > 0),
-        "pole_pairs > 0"
+        "pole_pairs = " + std::to_string(polePairs)
       },
       {
         (motorConstant > 0),
@@ -266,13 +272,14 @@ bool Configuration::sanityCheck(bool silent) const {
         (maxCurrentA > 0),
         "max_current > 0"
       },
+
       {
         (torqueConstantNmA > 0),
         "torque_constant > 0"
       },
       {
         (maxProfileVelocity > 0),
-        "max_profile_velocity > 0"
+        "max_profile_velocity = " + std::to_string(maxProfileVelocity)
       },
       {
         (quickStopDecel > 0),
@@ -280,19 +287,23 @@ bool Configuration::sanityCheck(bool silent) const {
       },
       {
         (profileDecel > 0),
-        "profile_decel > 0"
-      },
-      {
-        (profileDecel > 0),
-        "profile_decel > 0"
+        "profile_decel = " + std::to_string(profileDecel)
       },
       {
         (positionEncoderResolution > 0),
-        "position_encoder_resolution > 0"
+        "position_encoder_resolution = " + std::to_string(positionEncoderResolution)
       },
       {
         (gearRatio > 0),
-        "gear_ratio > 0"
+        "gear_ratio = " + std::to_string(gearRatio)
+      },
+      {
+        (1),
+        "sensor_correction_factor = " + std::to_string(sensorPositionCorrection)
+      },
+      {
+        (1),
+        "max_position = " + std::to_string(maxPosition) + ", min_position = " + std::to_string(minPosition)
       },
       {
         (pdoTypePair.first != RxPdoTypeEnum::NA && pdoTypePair.second != TxPdoTypeEnum::NA),

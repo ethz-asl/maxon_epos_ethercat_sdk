@@ -88,14 +88,19 @@ std::ostream& operator<<(std::ostream& os, const Controlword& controlword) {
      << " all "
      << "|\n"
      << setw(25) << setfill(' ') << "| endless movement_:"
-     << "| " << setw(6) << controlword.endlessMovement_ << "|" << setw(6) <<
-        "  pp"
+     << "| " << setw(6) << controlword.endlessMovement_ << "|" << setw(6) << "  pp"
      << "|\n"
      <<
 
       setw(25) << setfill('-') << "|" << setw(8) << "+" << setw(7) << "+"
      << "|" << std::right << std::noboolalpha;
   return os;
+}
+
+bool Controlword::getbit(uint8_t bit)
+{
+  if (controlWord_ & (1 << bit)){return true;}
+  else{return false;}
 }
 
 uint16_t Controlword::getRawControlword() {
@@ -117,9 +122,9 @@ uint16_t Controlword::getRawControlword() {
   if (halt_) {
     controlWord_ |= (1 << 8);
   }
-  /*if (endlessMovement_) {
-     controlWord_ |= (1 << 15);
-  }*/
+  // if (endlessMovement_) {
+  //   rawControlword |= (1 << 15);
+  // }
 
   return controlWord_;
 }
@@ -133,12 +138,6 @@ void Controlword::reset(int bit)
 {
   controlWord_ &= ~(1 << bit);
 }
-bool Controlword::getbit(uint8_t bit)
-{
-  if (controlWord_ & (1 << bit)){return true;}
-  else{return false;}
-}
-
 
 void Controlword::setStateTransition2() {
   setAllFalse();

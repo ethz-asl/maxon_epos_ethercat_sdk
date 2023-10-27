@@ -74,10 +74,12 @@ Command::Command(const Command& other) {
   positionFactorRadToInteger_ = other.positionFactorRadToInteger_;
   torqueFactorNmToInteger_ = other.torqueFactorNmToInteger_;
   currentFactorAToInteger_ = other.currentFactorAToInteger_;
+  sensorConfigFactor_ = other.sensorConfigFactor_;
+
 
   modeOfOperation_ = other.modeOfOperation_;
-
   useRawCommands_ = other.useRawCommands_;
+
   targetTorqueCommandUsed_ = other.targetTorqueCommandUsed_;
 }
 
@@ -108,7 +110,8 @@ Command& Command::operator=(const Command& other) {
   positionFactorRadToInteger_ = other.positionFactorRadToInteger_;
   torqueFactorNmToInteger_ = other.torqueFactorNmToInteger_;
   currentFactorAToInteger_ = other.currentFactorAToInteger_;
-
+  sensorConfigFactor_ = other.sensorConfigFactor_;
+  
   modeOfOperation_ = other.modeOfOperation_;
 
   useRawCommands_ = other.useRawCommands_;
@@ -205,18 +208,16 @@ void Command::setTorqueOffset(double torqueOffset) {
 void Command::setVelocityOffset(double velocityOffset) {
   velocityOffsetUU_ = velocityOffset;
 }
-void Command::setProfileAccel(double profileAccel) {
+void Command::setProfileAccel(uint32_t profileAccel) {
   profileAccelUU_ = profileAccel;
 }
-void Command::setProfileDeccel(double profileDeccel) {
+void Command::setProfileDeccel(uint32_t profileDeccel) {
   profileDeccelUU_ = profileDeccel;
 }
 void Command::setProfileVelocity(double profileVelocity) {
   profileVelocityUU_ = profileVelocity;
 }
-void Command::setZAxisPosition(double AxisPosition){
-  zAxisPositionUU_ = AxisPosition;
-}
+
 
 /*!
  * factors set methods
@@ -230,6 +231,10 @@ void Command::setTorqueFactorNmToInteger(double factor) {
 void Command::setCurrentFactorAToInteger(double factor) {
   currentFactorAToInteger_ = factor;
 }
+void Command::setSensorConfigFactor(double factor) {
+  sensorConfigFactor_ = factor;
+}
+
 
 /*!
  * other set methods
@@ -269,30 +274,27 @@ double Command::getVelocityOffset() const { return velocityOffsetUU_; }
 double Command::getProfileVelocity() const { return profileVelocityUU_; }
 double Command::getProfileAccel() const { return profileAccelUU_; }
 double Command::getProfileDeccel() const { return profileDeccelUU_; }
-double Command::getZAxisPosition () const {return zAxisPositionUU_;}
 
 void Command::doUnitConversion() {
   if (!useRawCommands_) {
     targetPosition_ =
-        static_cast<int32_t>(positionFactorRadToInteger_ * targetPositionUU_);
-    targetVelocity_ = static_cast<int32_t>(velocityFactorRadPerSecToMicroRPM_ *
+        static_cast<int32_t>(positionFactorRadToInteger_ * sensorConfigFactor_ * targetPositionUU_);
+    targetVelocity_ = static_cast<int32_t>(velocityFactorRadPerSecToMilliRPM_ * sensorConfigFactor_ *
                                            targetVelocityUU_);
     targetTorque_ =
-        static_cast<int16_t>(torqueFactorNmToInteger_ * targetTorqueUU_);
+        static_cast<int16_t>(torqueFactorNmToInteger_ * targetTorqueUU_ / sensorConfigFactor_);
 
     positionOffset_ =
-        static_cast<int32_t>(positionFactorRadToInteger_ * positionOffsetUU_);
+        static_cast<int32_t>(positionFactorRadToInteger_ * positionOffsetUU_ * sensorConfigFactor_);
     torqueOffset_ =
-        static_cast<int16_t>(torqueFactorNmToInteger_ * torqueOffsetUU_);
-    velocityOffset_ = static_cast<int32_t>(velocityFactorRadPerSecToMicroRPM_ *
+        static_cast<int16_t>(torqueFactorNmToInteger_ * torqueOffsetUU_ / sensorConfigFactor_);
+    velocityOffset_ = static_cast<int32_t>(velocityFactorRadPerSecToMilliRPM_ * sensorConfigFactor_ *
                                            velocityOffsetUU_);
-    profileAccel_ = static_cast<uint32_t>(accelFactorRadPerSecSquaredToRPMPerSec_ *
-                                            profileAccelUU_);
-    profileDeccel_ = static_cast<uint32_t>(accelFactorRadPerSecSquaredToRPMPerSec_ *
-                                            profileAccelUU_);
-    profileVelocity_ = static_cast<uint32_t>(velocityFactorRadPerSecToMicroRPM_ *
-                                           profileVelocityUU_);
-    zAxisPosition_=static_cast<uint32_t>(convFactorIncrToMeterZAxis_* zAxisPositionUU_);
+    profileAccel_ = profileAccelUU_ * sensorConfigFactor_; // No unit conversion since it is given in rpm/s
+    profileDeccel_ = profileDeccelUU_ * sensorConfigFactor_; // No unit conversion since it is given in rpm/s
+    profileVelocity_ = static_cast<uint32_t>(velocityFactorRadPerSecToMilliRPM_ * sensorConfigFactor_ *
+                                           profileVelocityUU_); 
+
   }
 }
 

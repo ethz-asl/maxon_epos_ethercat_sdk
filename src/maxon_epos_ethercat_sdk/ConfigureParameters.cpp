@@ -38,6 +38,10 @@
 
 #include <soem_interface/EthercatBusBase.hpp>
 
+#include <math.h>
+
+#define RADTOMICROREV 60.0*1e6/(2*M_PI)
+
 namespace maxon {
 bool Maxon::mapPdos(RxPdoTypeEnum rxPdoTypeEnum, TxPdoTypeEnum txPdoTypeEnum) {
   uint8_t subIndex;
@@ -94,8 +98,10 @@ bool Maxon::mapPdos(RxPdoTypeEnum rxPdoTypeEnum, TxPdoTypeEnum txPdoTypeEnum) {
           (OD_INDEX_OFFSET_POSITION << 16) | (0x00 << 8) | sizeof(int32_t) * 8,
           (OD_INDEX_OFFSET_TORQUE << 16) | (0x00 << 8) | sizeof(int16_t) * 8,
           (OD_INDEX_CONTROLWORD << 16) | (0x00 << 8) | sizeof(int16_t) * 8,
-          (OD_INDEX_MODES_OF_OPERATION << 16) | (0x00 << 8) | sizeof(int8_t) * 8,
+          (OD_INDEX_MODES_OF_OPERATION << 16) | (0x00 << 8) |
+              sizeof(int8_t) * 8,
       };
+
       subIndex = 0;
       for (const auto& objectIndex : objects) {
         subIndex += 1;
@@ -812,7 +818,7 @@ bool Maxon::mapPdos(RxPdoTypeEnum rxPdoTypeEnum, TxPdoTypeEnum txPdoTypeEnum) {
           (OD_INDEX_POSITION_ACTUAL << 16) | (0x00 << 8) | sizeof(int32_t) * 8,
           (OD_INDEX_VELOCITY_ACTUAL << 16) | (0x00 << 8) | sizeof(int32_t) * 8,
           (OD_INDEX_MODES_OF_OPERATION_DISPLAY<< 16) | (0x00 << 8) | sizeof(int8_t) * 8,
-          (OD_INDEX_DIGITAL_INPUTS<<16) | (0x00 << 8) | sizeof(uint32_t) * 8,
+          (OD_INDEX_DIG_IN_LOGIC_STATE<<16) | (0x01 << 8) | sizeof(int16_t) * 8,
       };
 
       subIndex = 0;
@@ -835,7 +841,7 @@ bool Maxon::mapPdos(RxPdoTypeEnum rxPdoTypeEnum, TxPdoTypeEnum txPdoTypeEnum) {
 
       break;
     }
-        case TxPdoTypeEnum::TxPdoPVMPPM: {
+    case TxPdoTypeEnum::TxPdoPVMPPM: {
       // (OD_INDEX_TORQUE_ACTUAL << 16) | (0x01 << 8) | sizeof(int16_t) * 8
 
       MELO_INFO_STREAM("[maxon_epos_ethercat_sdk:Maxon::mapPdos] Tx Pdo: "
@@ -856,12 +862,13 @@ bool Maxon::mapPdos(RxPdoTypeEnum rxPdoTypeEnum, TxPdoTypeEnum txPdoTypeEnum) {
                                   configuration_.configRunSdoVerifyTimeout);
 
       // Write objects...
-      std::array<uint32_t, 7> objects{
+      std::array<uint32_t, 8> objects{
           (OD_INDEX_STATUSWORD << 16) | (0x00 << 8) | sizeof(uint16_t) * 8,
           (OD_INDEX_POSITION_DEMAND << 16) | (0x00 << 8) | sizeof(int32_t) * 8,
           (OD_INDEX_VELOCITY_DEMAND << 16) | (0x00 << 8) | sizeof(int32_t) * 8,
           (OD_INDEX_POSITION_ACTUAL << 16) | (0x00 << 8) | sizeof(int32_t) * 8,
           (OD_INDEX_VELOCITY_ACTUAL << 16) | (0x00 << 8) | sizeof(int32_t) * 8,
+          (OD_INDEX_CURRENT_ACTUAL << 16) | (0x02 << 8) | sizeof(int32_t) * 8,
           (OD_INDEX_DIGITAL_INPUTS << 16)  | (0x00 << 8) | sizeof(uint32_t) * 8,
           (OD_INDEX_MODES_OF_OPERATION_DISPLAY<< 16) | (0x00 << 8) | sizeof(int8_t) * 8,
       };
@@ -886,7 +893,6 @@ bool Maxon::mapPdos(RxPdoTypeEnum rxPdoTypeEnum, TxPdoTypeEnum txPdoTypeEnum) {
 
       break;
     }
-
     case TxPdoTypeEnum::NA:
       MELO_ERROR_STREAM(
           "[maxon_epos_ethercat_sdk:Maxon::mapPdos] Cannot map "
@@ -921,152 +927,253 @@ bool Maxon::configParam() {
   uint32_t positionDGain;
   uint32_t velocityPGain;
   uint32_t velocityIGain;
+
+
   int8_t   homingMethod;
   uint16_t currentThreshold;
   uint32_t homingSpeeds;
   uint32_t homingAccel;
   uint32_t homeOffsetMoveDistance;
   uint32_t homePosition;
-
-  // Set velocity unit to micro revs per minute
-  uint32_t velocity_unit;
-  velocity_unit = 0xFAB44700;
-
-  //velocity_unit = 0xFDB44700;   // 0.001 revolutions/minute
+  // Set velocity unit to milli revs per minute
+  uint32_t velocity_unit = 0xFDB44700;
   
   configSuccess &=
       sdoVerifyWrite(OD_INDEX_SI_UNIT_VELOCITY, 0x00, false, velocity_unit,
                      configuration_.configRunSdoVerifyTimeout);
 
-  //set Homing method to Homing Method -3 (Current Threshold Positive Speed)
+  // ############################################################## //
+  // Homing parameters
+  // ############################################################## //
   homingMethod = static_cast<int8_t>(configuration_.homingMethod);
-  
-  //sendSdoRead(OF_INDEX_HOMING_METHOD, 0x00, false, homingMethod);
-  //std::cout << "homing method:  \n";
-
-  
-  configSuccess &= sdoVerifyWrite(OD_INDEX_HOMING_METHOD, 0x00, false, homingMethod, configuration_.configRunSdoVerifyTimeout);
-
-  //printf("Homing method: %d \n" ,temp);
+  configSuccess &= sdoVerifyWrite(OD_INDEX_HOMING_METHOD, 0x00, false, homingMethod, 
+                      configuration_.configRunSdoVerifyTimeout);
 
   //Used for homing methods «−1», «−2», «−3», and «−4». A mechanical border will 
   //be detected when the measured motor current rises above the specified threshold [mA].
   currentThreshold = static_cast<uint16_t>(configuration_.currentThreshold);
   configSuccess &= sdoVerifyWrite(OD_INDEX_CURRENT_THRESHOLD, 0x00, false,currentThreshold, configuration_.configRunSdoVerifyTimeout);
-
   //homing speeds Speed for switch search
   homingSpeeds = static_cast<uint32_t>(configuration_.homingSpeeds);
   configSuccess &= sdoVerifyWrite(OD_INDEX_HOMING_SPEEDS, 0x01, false,homingSpeeds, configuration_.configRunSdoVerifyTimeout);
-
   //Specifies the acceleration during Homing
   homingAccel = static_cast<uint32_t>(configuration_.homingAccel);
   configSuccess &= sdoVerifyWrite(OD_INDEX_HOMING_ACCEL, 0x00, false,homingAccel, configuration_.configRunSdoVerifyTimeout);
-
   // it is useful to move away from a detected position (for example mechanical limit stop or limit switch)
   homeOffsetMoveDistance = static_cast<uint32_t>(configuration_.homeOffsetMoveDistance);
   configSuccess &= sdoVerifyWrite(OD_INDEX_HOME_OFFSET_MOVE_DISTANCE, 0x00, false,homeOffsetMoveDistance, configuration_.configRunSdoVerifyTimeout);
-
   // Defines the position that will be set as zero position of the absolute position counte
   homePosition = static_cast<uint32_t>(configuration_.homePosition);
   configSuccess &= sdoVerifyWrite(OD_INDEX_HOME_POSITON, 0x00, false,homePosition, configuration_.configRunSdoVerifyTimeout);
+
+  if (!configuration_.useControllerParams) {
+
+    MELO_WARN_STREAM("[maxon_epos_ethercat_sdk] Writing config file specs to controller.");
+
+    // ############################################################## //
+    // Speeds
+    // ############################################################## //
+
+    maxMotorSpeed = static_cast<uint32_t>(configuration_.workVoltage * configuration_.speedConstant);
+    configSuccess &=  sdoVerifyWrite(OD_INDEX_MAX_MOTOR_SPEED, 0x00, false, maxMotorSpeed,
+                                     configuration_.configRunSdoVerifyTimeout);
+
+    maxGearSpeed = static_cast<uint32_t>(maxMotorSpeed / configuration_.gearRatio);
+    configSuccess &= sdoVerifyWrite(OD_INDEX_GEAR_DATA, 0x03, false, maxGearSpeed,
+                                    configuration_.configRunSdoVerifyTimeout);
+
+    maxProfileVelocity = static_cast<uint32_t>(configuration_.maxProfileVelocity * RADTOMICROREV);
+    configSuccess &= sdoVerifyWrite(OD_INDEX_MAX_PROFILE_VELOCITY, 0x00, false, maxProfileVelocity,
+                                    configuration_.configRunSdoVerifyTimeout);
+    
+    // ############################################################## //
+    // Accelerations
+    // ############################################################## //    
+
+    configSuccess &= sdoVerifyWrite(OD_INDEX_QUICKSTOP_DECELERATION, 0x00, false,
+                                    configuration_.quickStopDecel,
+                                    configuration_.configRunSdoVerifyTimeout);
+
+    configSuccess &= sdoVerifyWrite(OD_INDEX_PROFILE_DECELERATION, 0x00, false,
+                                    configuration_.profileDecel,
+                                    configuration_.configRunSdoVerifyTimeout);
+
+    // ############################################################## //
+    // Position Limits
+    // ############################################################## //
+
+    configSuccess &= sdoVerifyWrite(OD_INDEX_SOFTWARE_POSITION_LIMIT, 0x01, false,
+                                    configuration_.minPosition);
+
+    configSuccess &= sdoVerifyWrite(OD_INDEX_SOFTWARE_POSITION_LIMIT, 0x02, false,
+                                    configuration_.maxPosition);
+
+    // ############################################################## //
+    // Currents and Torque Constant
+    // ############################################################## //
+
+    nominalCurrent = static_cast<uint32_t>(round(1000.0 * configuration_.nominalCurrentA));
+    configSuccess &=
+        sdoVerifyWrite(OD_INDEX_MOTOR_DATA, 0x01, false, nominalCurrent,
+                      configuration_.configRunSdoVerifyTimeout);
+
+    maxCurrent =
+        static_cast<uint32_t>(round(1000.0 * configuration_.maxCurrentA));
+    configSuccess &= sdoVerifyWrite(OD_INDEX_MOTOR_DATA, 0x02, false, maxCurrent,
+                                    configuration_.configRunSdoVerifyTimeout);
+
+    torqueConstant =
+        static_cast<uint32_t>(1000000.0 * configuration_.torqueConstantNmA);
+    configSuccess &=
+        sdoVerifyWrite(OD_INDEX_MOTOR_DATA, 0x05, false, torqueConstant,
+                      configuration_.configRunSdoVerifyTimeout);
+
+    // ############################################################## //
+    // PID-Gains of Controller loops
+    // ############################################################## //
+
+    currentPGain = static_cast<uint32_t>(1000000 * configuration_.currentPGainSI);
+    configSuccess &= sdoVerifyWrite(OD_INDEX_CURRENT_CONTROL_PARAM, 0x01, false,
+                                    static_cast<uint32_t>(currentPGain),
+                                    configuration_.configRunSdoVerifyTimeout);
+
+    currentIGain = static_cast<uint32_t>(1000 * configuration_.currentIGainSI);
+    configSuccess &= sdoVerifyWrite(OD_INDEX_CURRENT_CONTROL_PARAM, 0x02, false,
+                                    static_cast<uint32_t>(currentIGain),
+                                    configuration_.configRunSdoVerifyTimeout);
+
+    positionPGain =
+        static_cast<uint32_t>(1000000 * configuration_.positionPGainSI);
+    configSuccess &= sdoVerifyWrite(OD_INDEX_POSITION_CONTROL_PARAM, 0x01, false,
+                                    static_cast<uint32_t>(positionPGain),
+                                    configuration_.configRunSdoVerifyTimeout);
+
+    positionIGain =
+        static_cast<uint32_t>(1000000 * configuration_.positionIGainSI);
+    configSuccess &= sdoVerifyWrite(OD_INDEX_POSITION_CONTROL_PARAM, 0x02, false,
+                                    static_cast<uint32_t>(positionIGain),
+                                    configuration_.configRunSdoVerifyTimeout);
+
+    positionDGain =
+        static_cast<uint32_t>(1000000 * configuration_.positionDGainSI);
+    configSuccess &= sdoVerifyWrite(OD_INDEX_POSITION_CONTROL_PARAM, 0x03, false,
+                                    static_cast<uint32_t>(positionDGain),
+                                    configuration_.configRunSdoVerifyTimeout);
+
+
+    configSuccess &= sdoVerifyWrite(OD_INDEX_FOLLOW_ERROR_WINDOW, 0x00, false,
+                                    configuration_.followErrorWindow,
+                                    configuration_.configRunSdoVerifyTimeout);
+
+    velocityPGain =
+        static_cast<uint32_t>(1000000 * configuration_.velocityPGainSI);
+    configSuccess &= sdoVerifyWrite(OD_INDEX_VELOCITY_CONTROL_PARAM, 0x01, false,
+                                    static_cast<uint32_t>(velocityPGain),
+                                    configuration_.configRunSdoVerifyTimeout);
+
+    velocityIGain =
+        static_cast<uint32_t>(1000000 * configuration_.velocityIGainSI);
+    configSuccess &= sdoVerifyWrite(OD_INDEX_VELOCITY_CONTROL_PARAM, 0x02, false,
+                                    static_cast<uint32_t>(velocityIGain),
+                                    configuration_.configRunSdoVerifyTimeout);
   
-  /*
-  
-  configSuccess &=
-      sdoVerifyWrite(OD_INDEX_MAX_MOTOR_SPEED, 0x00, false, configuration_.maxProfileVelocity,
-                     configuration_.configRunSdoVerifyTimeout);
-  */
-  /*
-  maxProfileVelocity = static_cast<uint32_t>(configuration_.maxProfileVelocity);
+  } else {
+    // Read Parameters to config from Controllers
+    MELO_WARN_STREAM("[maxon_epos_ethercat_sdk] Ignoring motor specs from config file. Reading from controller instead");
 
-  configSuccess &= sdoVerifyWrite(OD_INDEX_MAX_PROFILE_VELOCITY, 0x00, false,
-                                  maxProfileVelocity,
-                                  configuration_.configRunSdoVerifyTimeout);
-  */
-  /*
-  maxGearSpeed =
-      static_cast<uint32_t>(configuration_.maxProfileVelocity / 27.6);
-  configSuccess &= sdoVerifyWrite(OD_INDEX_GEAR_DATA, 0x03, false, maxGearSpeed,
-                                  configuration_.configRunSdoVerifyTimeout);
-  */
-  /*
+    uint32_t maxProfileVelocity;
+    configSuccess &= sendSdoRead(OD_INDEX_MAX_PROFILE_VELOCITY, 0x00, false,
+                                    maxProfileVelocity);
+
+    configuration_.maxProfileVelocity = maxProfileVelocity * 2 * M_PI / 60 / 1e6;
 
 
-  configSuccess &= sdoVerifyWrite(OD_INDEX_SOFTWARE_POSITION_LIMIT, 0x01, false,
-                                  configuration_.minPosition);
+    uint8_t polePairs;
+    configSuccess &= sendSdoRead(OD_INDEX_MOTOR_DATA, 0x03, false,
+                                    polePairs);
+    configuration_.polePairs = static_cast<double>(polePairs);
 
-  configSuccess &= sdoVerifyWrite(OD_INDEX_SOFTWARE_POSITION_LIMIT, 0x02, false,
-                                  configuration_.maxPosition);
 
-  nominalCurrent =
-      static_cast<uint32_t>(round(1000.0 * configuration_.nominalCurrentA));
-  configSuccess &=
-      sdoVerifyWrite(OD_INDEX_MOTOR_DATA, 0x01, false, nominalCurrent,
-                     configuration_.configRunSdoVerifyTimeout);
+    uint32_t numerator, denominator;
+    configSuccess &= sendSdoRead(OD_INDEX_GEAR_DATA, 0x01, false, numerator);
+    configSuccess &= sendSdoRead(OD_INDEX_GEAR_DATA, 0x02, false, denominator);
+    configuration_.gearRatio = static_cast<double>(numerator) / static_cast<double>(denominator);
 
-  maxCurrent =
-      static_cast<uint32_t>(round(1000.0 * configuration_.maxCurrentA));
-  configSuccess &= sdoVerifyWrite(OD_INDEX_MOTOR_DATA, 0x02, false, maxCurrent,
-                                  configuration_.configRunSdoVerifyTimeout);
+    int32_t min,max;
+    configSuccess &= sendSdoRead(OD_INDEX_SOFTWARE_POSITION_LIMIT, 0x01, false,
+                                    min);
 
-  torqueConstant =
-      static_cast<uint32_t>(1000000.0 * configuration_.torqueConstantNmA);
-  configSuccess &=
-      sdoVerifyWrite(OD_INDEX_MOTOR_DATA, 0x05, false, torqueConstant,
-                     configuration_.configRunSdoVerifyTimeout);
+    configSuccess &= sendSdoRead(OD_INDEX_SOFTWARE_POSITION_LIMIT, 0x02, false,
+                                    max);
+    configuration_.minPosition = min;
+    configuration_.maxPosition = max;
 
-  currentPGain = static_cast<uint32_t>(1000000 * configuration_.currentPGainSI);
-  configSuccess &= sdoVerifyWrite(OD_INDEX_CURRENT_CONTROL_PARAM, 0x01, false,
-                                  static_cast<uint32_t>(currentPGain),
-                                  configuration_.configRunSdoVerifyTimeout);
+    uint32_t nominalCurrent;
+    configSuccess &= sendSdoRead(OD_INDEX_MOTOR_DATA, 0x01, false, nominalCurrent);
+    configuration_.nominalCurrentA = static_cast<double>(nominalCurrent) / 1000;
 
-  currentIGain = static_cast<uint32_t>(1000 * configuration_.currentIGainSI);
-  configSuccess &= sdoVerifyWrite(OD_INDEX_CURRENT_CONTROL_PARAM, 0x02, false,
-                                  static_cast<uint32_t>(currentIGain),
-                                  configuration_.configRunSdoVerifyTimeout);
+    uint32_t maxCurrent;
+    configSuccess &= sendSdoRead(OD_INDEX_MOTOR_DATA, 0x02, false, maxCurrent);
+    configuration_.maxCurrentA = static_cast<double> (maxCurrent) / 1000;    
 
-  positionPGain =
-      static_cast<uint32_t>(1000000 * configuration_.positionPGainSI);
-  configSuccess &= sdoVerifyWrite(OD_INDEX_POSITION_CONTROL_PARAM, 0x01, false,
-                                  static_cast<uint32_t>(positionPGain),
-                                  configuration_.configRunSdoVerifyTimeout);
+    uint32_t torqueConstant;
+    configSuccess &= sendSdoRead(OD_INDEX_MOTOR_DATA, 0x05, false, torqueConstant); 
+    configuration_.torqueConstantNmA = static_cast<double> (torqueConstant) / 1e6;
 
-  positionIGain =
-      static_cast<uint32_t>(1000000 * configuration_.positionIGainSI);
-  configSuccess &= sdoVerifyWrite(OD_INDEX_POSITION_CONTROL_PARAM, 0x02, false,
-                                  static_cast<uint32_t>(positionIGain),
-                                  configuration_.configRunSdoVerifyTimeout);
+    configSuccess &= sendSdoRead(OD_INDEX_QUICKSTOP_DECELERATION, 0x00, false,
+                                    configuration_.quickStopDecel);
 
-  positionDGain =
-      static_cast<uint32_t>(1000000 * configuration_.positionDGainSI);
-  configSuccess &= sdoVerifyWrite(OD_INDEX_POSITION_CONTROL_PARAM, 0x03, false,
-                                  static_cast<uint32_t>(positionDGain),
-                                  configuration_.configRunSdoVerifyTimeout);
+    configSuccess &= sendSdoRead(OD_INDEX_PROFILE_DECELERATION, 0x00, false,
+                                    configuration_.profileDecel);
 
-  configSuccess &= sdoVerifyWrite(OD_INDEX_QUICKSTOP_DECELERATION, 0x00, false,
-                                  configuration_.quickStopDecel,
-                                  configuration_.configRunSdoVerifyTimeout);
+    configSuccess &= sendSdoRead(OD_INDEX_FOLLOW_ERROR_WINDOW, 0x00, false,
+                                    configuration_.followErrorWindow);
 
-  configSuccess &= sdoVerifyWrite(OD_INDEX_PROFILE_DECELERATION, 0x00, false,
-                                  configuration_.profileDecel,
-                                  configuration_.configRunSdoVerifyTimeout);
-*/
-  configSuccess &= sdoVerifyWrite(OD_INDEX_FOLLOW_ERROR_WINDOW, 0x00, false,
-                                  configuration_.followErrorWindow,
-                                  configuration_.configRunSdoVerifyTimeout);
-/*
-  velocityPGain =
-      static_cast<uint32_t>(1000000 * configuration_.velocityPGainSI);
-  configSuccess &= sdoVerifyWrite(OD_INDEX_VELOCITY_CONTROL_PARAM, 0x01, false,
-                                  static_cast<uint32_t>(velocityPGain),
-                                  configuration_.configRunSdoVerifyTimeout);
 
-  velocityIGain =
-      static_cast<uint32_t>(1000000 * configuration_.velocityIGainSI);
-  configSuccess &= sdoVerifyWrite(OD_INDEX_VELOCITY_CONTROL_PARAM, 0x02, false,
-                                  static_cast<uint32_t>(velocityIGain),
-                                  configuration_.configRunSdoVerifyTimeout);
-  */
+    // Retrieve sensor configuration from device and set scaling (position raw <-> actual) correspondingly
+    
+    uint32_t encoderResolution = 0;   
+
+    configSuccess &= sendSdoRead(OD_INDEX_SENSOR_CONFIG, 0x05, false,
+                                    encoderResolution);
+    configuration_.positionEncoderResolution = encoderResolution;
+
+    uint32_t sensorConfig = 0, mountingPosition = 0, gearMounted = 0;
+    configSuccess &= sendSdoRead(OD_INDEX_SENSOR_CONFIG, 0x02, false,
+                                sensorConfig);
+
+    uint32_t mainSensor = (sensorConfig >> 16) & 0xF;
+
+    gearMounted = (sensorConfig >> 12) & 0x1;
+
+
+    switch (mainSensor) {
+      case 1:
+        mountingPosition = (sensorConfig >> 24) & 0x1;
+        break;
+      case 2:
+        mountingPosition = (sensorConfig >> 26) & 0x1;
+        break;
+      case 3:
+        mountingPosition = (sensorConfig >> 28) & 0x1;
+        break;
+      default:
+        break;
+    }
+
+    MELO_WARN_STREAM("Gear mounted: " + std::to_string(gearMounted) + ", Main Sensor: " + std::to_string(mainSensor) + ", Sensor Position: " + std::to_string(mountingPosition) + "\n");
+
+    if (mountingPosition == 0 && gearMounted) { // Sensor on motor axis with gear mounted.
+      configuration_.sensorPositionCorrection = configuration_.gearRatio;
+    } else {
+      configuration_.sensorPositionCorrection = 1;
+    }
+
+
+    configuration_.sanityCheck();
+  }
+
+
 
   if (configSuccess) {
     MELO_INFO("Setting configuration parameters succeeded.");
