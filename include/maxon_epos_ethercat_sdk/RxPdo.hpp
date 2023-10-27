@@ -129,27 +129,4 @@ struct RxPdoPVMPPM {
   int16_t motionProfileType_;
   int8_t modeOfOperation_;
 } __attribute__((packed));
-
-
-
-/*struct RxPdoPPMHMM{
-  //PPM Specific
-  uint16_t controlWord_;
-  int32_t targetPosition_;
-  uint32_t profileVelocity_;
-  uint32_t profileAccel_;
-  uint32_t profileDeccel_;
-  
-  //Homing Mode Specific
-  uint16_t currentThreshold_;
-  uint32_t homingSpeeds_;
-  uint32_t homingAccel_;
-  uint32_t homeOffsetMoveDistance_;
-  uint32_t homePosition_;
-
-  int16_t  motionProfileType_;
-  int8_t modeOfOperation_;
-}__attribute__((packed));
-*/
-
 }  // namespace maxon

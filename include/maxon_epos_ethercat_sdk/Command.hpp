@@ -72,6 +72,7 @@ class Command {
   void setPositionFactorRadToInteger(double factor);
   void setTorqueFactorNmToInteger(double factor);
   void setCurrentFactorAToInteger(double factor);
+  void setSensorConfigFactor(double factor);
 
   /// set user units (rad, rad/s,  rad/(s²))
   void setTargetPosition(double targetPosition);
@@ -80,10 +81,10 @@ class Command {
   void setPositionOffset(double positionOffset);
   void setTorqueOffset(double velocityOffset);
   void setVelocityOffset(double velocityOffset);
-  void setProfileAccel(double profileAccel);
-  void setProfileDeccel(double profileDeccel);
+  void setProfileAccel(uint32_t profileAccel);
+  void setProfileDeccel(uint32_t profileDeccel);
   void setProfileVelocity(double profileVelocity);
-  void setZAxisPosition(double AxisPosition); 
+
 
   /// other
   void setDigitalOutputs(uint32_t digitalOutputs);
@@ -111,7 +112,7 @@ class Command {
   double getProfileVelocity() const;
   double getProfileAccel() const;
   double getProfileDeccel() const;
-  double getZAxisPosition () const;
+
   /*!
    * Get the digital outputs.
    * Only available as integer value
@@ -142,7 +143,6 @@ class Command {
   double profileVelocityUU_{0};
   double profileAccelUU_{0};
   double profileDeccelUU_{0};
-  double zAxisPositionUU_{0};
 
   int32_t targetPosition_{0};
   int32_t targetVelocity_{0};
@@ -154,17 +154,17 @@ class Command {
   uint32_t profileAccel_{0};
   uint32_t profileDeccel_{0};
   int16_t motionProfileType_{0};
-  uint32_t zAxisPosition_{0};
+
   std::mutex targetTorqueCommandMutex_;
 
   uint32_t digitalOutputs_{0};
 
   double positionFactorRadToInteger_{1};
   const double velocityFactorRadPerSecToMicroRPM_{1.0 / (2 * M_PI) * 60 * 1e6};
-  const double accelFactorRadPerSecSquaredToRPMPerSec_{1.0/ (2 * M_PI) * 60};
+  const double velocityFactorRadPerSecToMilliRPM_{1.0 / (2 * M_PI) * 60 * 1e3};
+  double sensorConfigFactor_{1};
   double torqueFactorNmToInteger_{1};
   double currentFactorAToInteger_{1};
-  uint32_t convFactorIncrToMeterZAxis_{22080000};
 
   ModeOfOperationEnum modeOfOperation_{ModeOfOperationEnum::NA};
 

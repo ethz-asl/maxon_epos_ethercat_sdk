@@ -108,7 +108,8 @@ struct TxPdoPVMPPM {
   int32_t demandVelocity_;
   int32_t actualPosition_;
   int32_t actualVelocity_;
-  uint32_t digitalInputState_;
+  int32_t actualCurrent_;
+  uint32_t digInLogicState_;
   uint8_t modeOfOperation_;
 } __attribute__((packed));
 

@@ -43,6 +43,13 @@
 namespace maxon {
 class Configuration {
  public:
+  /*
+  Angles: [rad]           --> Cinverted to inc (via Encoder resolution and sensor placement) when directly interfacing hardware
+  Velocities: [rad/s]     --> Converted to microrpm/s when directly interfacing hardware
+  Accelerations: [rpm/s]  --> Same unit when interfacing hardware
+  */
+
+
   std::vector<ModeOfOperationEnum> modesOfOperation = {ModeOfOperationEnum::NA};
   unsigned int configRunSdoVerifyTimeout{20000};
   bool printDebugMessages{true};
@@ -53,22 +60,30 @@ class Configuration {
   bool forceAppendEqualFault{false};
   unsigned int errorStorageCapacity{100};
   unsigned int faultStorageCapacity{100};
-  int32_t positionEncoderResolution{1};
+
   bool useRawCommands{false};
+  bool useControllerParams{false};
+
+  int32_t positionEncoderResolution{1};     // [inc/rev]
   double gearRatio{1};
+  double sensorPositionCorrection{1}; // either 1 or gearRatio (depending on sensor positioning)
+
+
   double motorConstant{1};
   double workVoltage{48.0};
   double speedConstant{0};
-  double polePairs{11};
-  double nominalCurrentA{0};
+  uint32_t polePairs{11};
+  double nominalCurrentA{0};                // [A]
   double torqueConstantNmA{0};
-  double maxCurrentA{0};
-  int32_t minPosition{0};
-  int32_t maxPosition{0};
-  uint32_t maxProfileVelocity{0};
-  uint32_t quickStopDecel{10000};
-  uint32_t profileDecel{10000};
-  uint32_t followErrorWindow{2000};
+  double maxCurrentA{0};                    // [A]
+
+  double minPosition{0};                    // [rad]
+  double maxPosition{0};                    // [rad]
+
+  double maxProfileVelocity{0};             // [rad/s]
+  uint32_t quickStopDecel{10000};           // [rpm/s]
+  uint32_t profileDecel{10000};             // [rpm/s]
+  uint32_t followErrorWindow{2000};         // [inc]
   double currentPGainSI{1.171880};
   double currentIGainSI{3906.250};
   double positionPGainSI{1.5};
@@ -76,6 +91,8 @@ class Configuration {
   double positionDGainSI{0.016};
   double velocityPGainSI{0.02};
   double velocityIGainSI{0.5};
+
+
   int8_t homingMethod {-3};
   uint16_t currentThreshold{0};
   uint32_t homingSpeeds{10};
